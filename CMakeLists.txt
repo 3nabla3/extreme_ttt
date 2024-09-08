@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.10)
 project(extreme_ttt VERSION 0.1.0 LANGUAGES C CXX)
 
 # Set the C++ standard to C++20
@@ -27,3 +27,9 @@ set(GLFW_LIB_PATH ${CMAKE_BINARY_DIR}/external/glfw/src/libglfw3.a)
 # Link with glfw3.a and GL
 target_link_libraries(extreme_ttt ${GLFW_LIB_PATH})
 target_link_libraries(extreme_ttt GL)
+
+# Add precompiled header
+set(PCH_FILE pch.h)
+
+# Create precompiled header target
+target_precompile_headers(extreme_ttt PRIVATE ${PCH_FILE})

@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "pch.h"
 
 void Game::RegisterPlayer(std::unique_ptr<PlayerInterface> player) {
   if (!m_playerX) {

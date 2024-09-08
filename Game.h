@@ -1,6 +1,5 @@
 #pragma once
 #include "players/PlayerInterface.h"
-#include <memory>
 
 class Game {
 public:

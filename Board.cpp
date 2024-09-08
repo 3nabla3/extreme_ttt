@@ -1,6 +1,5 @@
 #include "Board.h"
-
-#include "Move.h"
+#include "pch.h"
 
 int Board::s_indices[8][3] = {
     // rows
@@ -77,7 +76,7 @@ bool Board::IsBoardFull(int boardPosition) const {
 
 bool Board::IsMoveLegal(const Move& move) const {
   // no matter what, you can only play in a cell that is empty
-  if (m_board[move.m_BoardPosition * 9 + move.m_cellPosition] != Piece::Empty) {
+  if (m_board[move.m_boardPosition * 9 + move.m_cellPosition] != Piece::Empty) {
     return false;
   }
   // if it's the first move, you can play anywhere
@@ -85,13 +84,13 @@ bool Board::IsMoveLegal(const Move& move) const {
     return true;
   }
   // you can only play on a board where the game is in progress
-  if (m_bigBoard[move.m_BoardPosition] != GameStatus::InProgress) {
+  if (m_bigBoard[move.m_boardPosition] != GameStatus::InProgress) {
     return false;
   }
   // if it's not the first move, you can only play in the board
   // that corresponds to the cell of the last move unless that board has
   // a game that that is not in progress
-  if (move.m_BoardPosition != m_lastMove->m_cellPosition) {
+  if (move.m_boardPosition != m_lastMove->m_cellPosition) {
     GameStatus status = m_bigBoard[m_lastMove->m_cellPosition];
     return status != GameStatus::InProgress;
   }
@@ -100,15 +99,17 @@ bool Board::IsMoveLegal(const Move& move) const {
 
 void Board::Play(const Move& move) {
   if (!IsMoveLegal(move)) {
-    throw std::invalid_argument("Invalid move");
+    std::stringstream ss;
+    ss << "Invalid move: " << move;
+    throw std::invalid_argument(ss.str());
   }
-  m_board[move.m_BoardPosition * 9 + move.m_cellPosition] =
+  m_board[move.m_boardPosition * 9 + move.m_cellPosition] =
       player2piece(m_currentPlayer);
   m_currentPlayer = static_cast<Player>(-static_cast<int>(m_currentPlayer));
   m_lastMove = move;
 
   // update the status of the big board
-  m_bigBoard[move.m_BoardPosition] = GetGameStatus(move.m_BoardPosition);
+  m_bigBoard[move.m_boardPosition] = GetGameStatus(move.m_boardPosition);
 }
 
 static Move ConvertIdxToMove(int idx) { return Move(idx / 9, idx % 9); }

@@ -14,7 +14,7 @@ public:
       int cellPosition = rand() % 9;
       Move move(boardPosition, cellPosition);
       if (m_Board.IsMoveLegal(move)) {
-        std::cout << m_player << " " << move.m_BoardPosition << ", "
+        std::cout << m_player << " " << move.m_boardPosition << ", "
                   << move.m_cellPosition << '\n';
 
         m_Board.Play(move);

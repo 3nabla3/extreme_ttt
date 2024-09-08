@@ -1,6 +1,4 @@
 #pragma once
-#include <iostream>
-#include <optional>
 
 #include "Move.h"
 
@@ -17,7 +15,7 @@ enum class Player {
   O = -1
 };
 
-std::ostream& operator<<(std::ostream& os, const Player& piece);
+std::ostream& operator<<(std::ostream& os, const Player& player);
 
 enum class GameStatus {
   InProgress,
