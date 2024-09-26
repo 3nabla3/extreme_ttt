@@ -1,5 +1,5 @@
-#include "Board.h"
 #include "pch.h"
+#include "Board.h"
 
 int Board::s_indices[8][3] = {
     // rows
@@ -30,12 +30,12 @@ std::ostream& operator<<(std::ostream& os, const Piece& piece) {
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const Player& player) {
+std::ostream& operator<<(std::ostream& os, const PlayerSymbol& player) {
   switch (player) {
-  case Player::X:
+  case PlayerSymbol::X:
     os << "X";
     break;
-  case Player::O:
+  case PlayerSymbol::O:
     os << "O";
     break;
   }
@@ -60,8 +60,8 @@ std::ostream& operator<<(std::ostream& os, const GameStatus& status) {
   return os;
 }
 
-static Piece player2piece(Player player) {
-  if (player == Player::X) {
+static Piece player2piece(PlayerSymbol player) {
+  if (player == PlayerSymbol::X) {
     return Piece::X;
   } else {
     return Piece::O;
@@ -69,9 +69,11 @@ static Piece player2piece(Player player) {
 }
 
 bool Board::IsBoardFull(int boardPosition) const {
-  const Piece* start = m_board + boardPosition * 9;
-  return std::all_of(start, start + 9,
-                     [](Piece piece) { return piece != Piece::Empty; });
+  const auto& start = m_board.begin() + boardPosition * 9;
+  const auto& end = start + 9;
+  return std::all_of(start, end, [](Piece piece) {
+    return piece != Piece::Empty;
+  });
 }
 
 bool Board::IsMoveLegal(const Move& move) const {
@@ -99,17 +101,16 @@ bool Board::IsMoveLegal(const Move& move) const {
 
 void Board::Play(const Move& move) {
   if (!IsMoveLegal(move)) {
-    std::stringstream ss;
-    ss << "Invalid move: " << move;
-    throw std::invalid_argument(ss.str());
+    SPDLOG_CRITICAL("Invalid move {}", move);
   }
-  m_board[move.m_boardPosition * 9 + move.m_cellPosition] =
-      player2piece(m_currentPlayer);
-  m_currentPlayer = static_cast<Player>(-static_cast<int>(m_currentPlayer));
+  int index = move.m_boardPosition * 9 + move.m_cellPosition;
+  m_board[index] = player2piece(m_currentPlayer);
+  m_currentPlayer = GetOtherPlayer();
   m_lastMove = move;
 
   // update the status of the big board
-  m_bigBoard[move.m_boardPosition] = GetGameStatus(move.m_boardPosition);
+  m_bigBoard[move.m_boardPosition] = CalcGameStatus(move.m_boardPosition);
+  m_topGameStatus = CalcGameStatus();
 }
 
 static Move ConvertIdxToMove(int idx) { return Move(idx / 9, idx % 9); }
@@ -118,7 +119,14 @@ void Board::PrintPiece(std::ostream& os, int idx) const {
   const Piece piece = m_board[idx];
   const Move move = ConvertIdxToMove(idx);
   if (m_lastMove && move == *m_lastMove) {
+    // red
     os << "\033[1;31m" << piece << "\033[0m";
+  } else if (m_bigBoard[move.m_boardPosition] == GameStatus::XWins) {
+    // purple
+    os << "\033[1;35m" << piece << "\033[0m";
+  } else if (m_bigBoard[move.m_boardPosition] == GameStatus::OWins) {
+    // light blue
+    os << "\033[1;36m" << piece << "\033[0m";
   } else {
     os << piece;
   }
@@ -153,8 +161,9 @@ std::ostream& operator<<(std::ostream& os, const Board& game) {
 
 GameStatus Board::GetGameStatus_IMPL(const Piece* board) const {
   // check if the board is full
-  if (std::all_of(board, board + 9,
-                  [](Piece piece) { return piece != Piece::Empty; })) {
+  if (std::all_of(board, board + 9, [](Piece piece) {
+        return piece != Piece::Empty;
+      })) {
     return GameStatus::Draw;
   }
 
@@ -164,36 +173,71 @@ GameStatus Board::GetGameStatus_IMPL(const Piece* board) const {
     const int* indices = s_indices[i];
     if (board[indices[0]] == piece && board[indices[1]] == piece &&
         board[indices[2]] == piece) {
-      return GetOtherPlayer() == Player::X ? GameStatus::XWins
-                                           : GameStatus::OWins;
+      return GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
+                                                 : GameStatus::OWins;
     }
   }
 
   return GameStatus::InProgress;
 }
 
-GameStatus Board::GetGameStatus(int boardPosition) const {
-  return GetGameStatus_IMPL(m_board + boardPosition * 9);
+GameStatus Board::CalcGameStatus(int boardPosition) const {
+  return GetGameStatus_IMPL(m_board.data() + boardPosition * 9);
 }
 
-GameStatus Board::GetGameStatus() const {
-  // if no boards are in progress, the game is a draw
-  if (std::all_of(m_bigBoard, m_bigBoard + 9, [](GameStatus status) {
-        return status != GameStatus::InProgress;
-      })) {
-    return GameStatus::Draw;
-  }
-
+GameStatus Board::CalcGameStatus() const {
   // only the last player that played on the board can win
-  GameStatus status =
-      GetOtherPlayer() == Player::X ? GameStatus::XWins : GameStatus::OWins;
+  GameStatus status = GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
+                                                          : GameStatus::OWins;
   for (int i = 0; i < 8; i++) {
     const int* indices = s_indices[i];
-    if (m_bigBoard[indices[0]] == status && m_bigBoard[indices[1]] == status &&
+    if (m_bigBoard[indices[0]] == status &&
+        m_bigBoard[indices[1]] == status &&
         m_bigBoard[indices[2]] == status) {
       return status;
     }
   }
 
+  // if no boards are in progress, the game is a draw
+  if (std::all_of(m_bigBoard.begin(), m_bigBoard.end(), [](GameStatus status) {
+        return status != GameStatus::InProgress;
+      })) {
+    return GameStatus::Draw;
+  }
+
   return GameStatus::InProgress;
+}
+
+std::size_t hash_value(const Board& board) {
+  SPDLOG_TRACE("Calculating hash value");
+  std::size_t seed = 0;
+  std::hash<int> int_hasher;
+
+  // Hash the main board
+  for (const auto& piece : board.m_board) {
+    seed ^= int_hasher(static_cast<int>(piece)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  // Hash the big board status
+  for (const auto& status : board.m_bigBoard) {
+    seed ^= int_hasher(static_cast<int>(status)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  // Hash the current player
+  seed ^= int_hasher(static_cast<int>(board.m_currentPlayer)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+  // Hash the last move, if it exists
+  if (board.m_lastMove) {
+    seed ^= int_hasher(board.m_lastMove->m_boardPosition) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    seed ^= int_hasher(board.m_lastMove->m_cellPosition) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+
+  return seed;
+}
+
+bool operator==(const Board& lhs, const Board& rhs) {
+  return lhs.m_board == rhs.m_board &&
+         lhs.m_bigBoard == rhs.m_bigBoard &&
+         lhs.m_currentPlayer == rhs.m_currentPlayer &&
+         lhs.m_lastMove == rhs.m_lastMove;
 }

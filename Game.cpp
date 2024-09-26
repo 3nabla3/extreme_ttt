@@ -1,32 +1,43 @@
-#include "Game.h"
 #include "pch.h"
+#include "Game.h"
+#include "players/MinMaxPlayer.h"
 
-void Game::RegisterPlayer(std::unique_ptr<PlayerInterface> player) {
+void Game::RegisterPlayer(std::unique_ptr<Player> player) {
   if (!m_playerX) {
     m_playerX = std::move(player);
-    m_playerX->SetPlayer(Player::X);
+    m_playerX->SetPlayer(PlayerSymbol::X);
+    SPDLOG_INFO("Registed player X");
   } else {
     m_playerO = std::move(player);
-    m_playerX->SetPlayer(Player::O);
+    m_playerX->SetPlayer(PlayerSymbol::O);
+    SPDLOG_INFO("Registed player O");
   }
 }
 
 GameStatus Game::Run() {
+  SPDLOG_INFO("Running the game");
+  std::hash<Board> hasher;
   std::cout << m_board << '\n';
 
   while (!m_board.IsGameOver()) {
-    if (m_board.GetCurrentPlayer() == Player::X) {
-      Move m = m_playerX->GetMove();
+    Move m;
+    PlayerSymbol player = m_board.GetCurrentPlayer();
+    if (player == PlayerSymbol::X) {
+      m = m_playerX->GetMove();
       m_board.Play(m);
       m_playerO->ReceiveMove(m);
     } else {
-      Move m = m_playerO->GetMove();
+      m = m_playerO->GetMove();
       m_board.Play(m);
       m_playerX->ReceiveMove(m);
     }
 
+    SPDLOG_INFO("{} played {}", player, m);
+    SPDLOG_DEBUG("New hash {}", hasher(m_board));
+
     std::cout << m_board << '\n';
   }
 
-  return m_board.GetGameStatus();
+  SPDLOG_INFO("Game is over");
+  return m_board.GetTopGameStatus();
 }

@@ -2,11 +2,11 @@
 #include "../Board.h"
 #include "../Move.h"
 
-class PlayerInterface {
+class Player {
 public:
-  virtual ~PlayerInterface(){};
+  virtual ~Player(){};
   virtual Move GetMove() = 0;
   virtual void Reset() = 0;
   virtual void ReceiveMove(const Move& move) = 0;
-  virtual void SetPlayer(Player player) = 0;
+  virtual void SetPlayer(PlayerSymbol player) = 0;
 };

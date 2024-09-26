@@ -9,13 +9,17 @@ enum class Piece {
 };
 
 std::ostream& operator<<(std::ostream& os, const Piece& piece);
+template <>
+struct fmt::formatter<Piece> : fmt::ostream_formatter {};
 
-enum class Player {
+enum class PlayerSymbol {
   X = 1,
   O = -1
 };
 
-std::ostream& operator<<(std::ostream& os, const Player& player);
+std::ostream& operator<<(std::ostream& os, const PlayerSymbol& player);
+template <>
+struct fmt::formatter<PlayerSymbol> : fmt::ostream_formatter {};
 
 enum class GameStatus {
   InProgress,
@@ -25,37 +29,53 @@ enum class GameStatus {
 };
 
 std::ostream& operator<<(std::ostream& os, const GameStatus& status);
+template <>
+struct fmt::formatter<GameStatus> : fmt::ostream_formatter {};
 
 class Board {
 public:
   Board() = default;
+  friend bool operator==(const Board& lhs, const Board& rhs);
   bool IsMoveLegal(const Move& move) const;
   void Play(const Move& move);
-  Player GetCurrentPlayer() const { return m_currentPlayer; }
-  Player GetOtherPlayer() const {
-    return static_cast<Player>(-static_cast<int>(m_currentPlayer));
+  PlayerSymbol GetCurrentPlayer() const { return m_currentPlayer; }
+  PlayerSymbol GetOtherPlayer() const {
+    return static_cast<PlayerSymbol>(-static_cast<int>(m_currentPlayer));
   }
-
-  // Get the game status for the entire board
-  GameStatus GetGameStatus() const;
-  // Get the game status for a specific sub board
-  GameStatus GetGameStatus(int boardPosition) const;
+  inline GameStatus GetTopGameStatus() { return m_topGameStatus; }
 
   inline bool IsGameOver() const {
-    return GetGameStatus() != GameStatus::InProgress;
+    return m_topGameStatus != GameStatus::InProgress;
   }
   friend std::ostream& operator<<(std::ostream& os, const Board& board);
+  friend std::size_t hash_value(const Board& board);
 
 private:
+  // Get the game status for the entire board
+  GameStatus CalcGameStatus() const;
+  // Get the game status for a specific sub board
+  GameStatus CalcGameStatus(int boardPosition) const;
+
   bool IsBoardFull(int boardPosition) const;
   void PrintPiece(std::ostream& os, int idx) const;
   GameStatus GetGameStatus_IMPL(const Piece* board) const;
 
-  Piece m_board[9 * 9] = {Piece::Empty};
-  GameStatus m_bigBoard[9] = {GameStatus::InProgress};
+  std::array<Piece, 9 * 9> m_board = {Piece::Empty};
+  std::array<GameStatus, 9> m_bigBoard = {GameStatus::InProgress};
+  GameStatus m_topGameStatus = GameStatus::InProgress;
 
-  Player m_currentPlayer = Player::X;
+  PlayerSymbol m_currentPlayer = PlayerSymbol::X;
   std::optional<Move> m_lastMove;
 
   static int s_indices[8][3];
 };
+
+// make the Board hashable
+namespace std {
+template <>
+struct hash<Board> {
+  std::size_t operator()(const Board& board) const {
+    return hash_value(board);
+  }
+};
+} // namespace std

@@ -1,20 +1,23 @@
 #pragma once
-#include "PlayerInterface.h"
+#include "Player.h"
 
-struct Node {
-  Move move;
-  Board board;
-  std::vector<std::unique_ptr<Node>> children;
-};
+typedef uint32_t Score;
 
-class MinMaxPlayer : public PlayerInterface {
+class MinMaxPlayer : public Player {
 public:
   virtual void Reset() override {}
-  virtual void ReceiveMove(const Move& move) override {}
-  virtual void SetPlayer(Player player) override { m_player = player; }
-
-  virtual Move GetMove() override { return Move(0, 0); }
+  virtual void ReceiveMove(const Move&) override {}
+  virtual void SetPlayer(PlayerSymbol player) override { m_player = player; }
+  virtual Move GetMove() override;
+  Score Negamax(const Board& board, int depth, Score alpha, Score beta, int weigth);
+  Score StaticAnalysis(const Board& board);
+  static float HitRatio() { return ((found * 1.0f) / (attempted * 1.0f)); }
 
 private:
-  Player m_player;
+  Score CalcStaticAnalysis(const Board& board);
+  static std::unordered_map<Board, Score> s_scoreMap;
+  static int attempted;
+  static int found;
+  PlayerSymbol m_player;
+  Board m_mainBoard;
 };

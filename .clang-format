@@ -1,3 +1,7 @@
 BasedOnStyle: LLVM
 PointerAlignment: Left
 AllowShortEnumsOnASingleLine: false
+SortIncludes: false
+BinPackArguments: false
+BinPackParameters: false
+ColumnLimit: 0

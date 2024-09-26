@@ -1,14 +1,14 @@
 #pragma once
-#include "PlayerInterface.h"
+#include "Player.h"
 
-class HumanPlayer : public PlayerInterface {
+class HumanPlayer : public Player {
 public:
   virtual void Reset() override {}
-  virtual void ReceiveMove(const Move& move) override {}
-  virtual void SetPlayer(Player player) override { m_player = player; }
+  virtual void ReceiveMove(const Move&) override {}
+  virtual void SetPlayer(PlayerSymbol player) override { m_player = player; }
 
   virtual Move GetMove() override {
-    std::cout << "Player " << m_player << " move" << std::endl;
+    std::cout << "Player " << m_player << " move\n";
     int boardPosition;
     int cellPosition;
     std::cout << "Enter board position: ";
@@ -19,5 +19,5 @@ public:
   }
 
 private:
-  Player m_player;
+  PlayerSymbol m_player;
 };

@@ -9,6 +9,7 @@
 
 // add headers that you want to pre-compile here
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -23,6 +24,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <random>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -33,3 +35,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#define SPDLOG_ACTIVE_LEVEL 0
+#include "spdlog/spdlog.h"
+#include "spdlog/fmt/ostr.h"

@@ -1,0 +1,841 @@
+diff --git a/.clang-format b/.clang-format
+index 214d185..eb8bb99 100644
+--- a/.clang-format
++++ b/.clang-format
+@@ -1,3 +1,7 @@
+ BasedOnStyle: LLVM
+ PointerAlignment: Left
+-AllowShortEnumsOnASingleLine: false
+\ No newline at end of file
++AllowShortEnumsOnASingleLine: false
++SortIncludes: false
++BinPackArguments: false
++BinPackParameters: false
++ColumnLimit: 0
+\ No newline at end of file
+diff --git a/.gitmodules b/.gitmodules
+index bc4fe37..1edf7e1 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -1,3 +1,6 @@
+ [submodule "external/glfw"]
+ 	path = external/glfw
+ 	url = https://github.com/glfw/glfw.git
++[submodule "external/spdlog"]
++	path = external/spdlog
++	url = https://github.com/gabime/spdlog
+diff --git a/.vscode/c_cpp_properties.json b/.vscode/c_cpp_properties.json
+new file mode 100644
+index 0000000..26cd1fc
+--- /dev/null
++++ b/.vscode/c_cpp_properties.json
+@@ -0,0 +1,22 @@
++{
++    "configurations": [
++        {
++            "name": "Win32",
++            "includePath": [
++                "${workspaceFolder}/**"
++            ],
++            "defines": [
++                "_DEBUG",
++                "UNICODE",
++                "_UNICODE"
++            ],
++            "windowsSdkVersion": "10.0.22621.0",
++            "compilerPath": "cl.exe",
++            "cStandard": "c17",
++            "cppStandard": "c++20",
++            "intelliSenseMode": "windows-msvc-x64",
++            "configurationProvider": "ms-vscode.cmake-tools"
++        }
++    ],
++    "version": 4
++}
+\ No newline at end of file
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+index 8dcac39..f7bd4da 100644
+--- a/.vscode/settings.json
++++ b/.vscode/settings.json
+@@ -49,6 +49,48 @@
+         "streambuf": "cpp",
+         "cinttypes": "cpp",
+         "typeinfo": "cpp",
+-        "sstream": "cpp"
++        "sstream": "cpp",
++        "charconv": "cpp",
++        "chrono": "cpp",
++        "condition_variable": "cpp",
++        "ctime": "cpp",
++        "format": "cpp",
++        "forward_list": "cpp",
++        "fstream": "cpp",
++        "future": "cpp",
++        "iomanip": "cpp",
++        "ios": "cpp",
++        "list": "cpp",
++        "locale": "cpp",
++        "map": "cpp",
++        "mutex": "cpp",
++        "ratio": "cpp",
++        "set": "cpp",
++        "stop_token": "cpp",
++        "thread": "cpp",
++        "unordered_set": "cpp",
++        "xfacet": "cpp",
++        "xhash": "cpp",
++        "xiosbase": "cpp",
++        "xlocale": "cpp",
++        "xlocbuf": "cpp",
++        "xlocinfo": "cpp",
++        "xlocmes": "cpp",
++        "xlocmon": "cpp",
++        "xlocnum": "cpp",
++        "xloctime": "cpp",
++        "xmemory": "cpp",
++        "xstring": "cpp",
++        "xtr1common": "cpp",
++        "xtree": "cpp",
++        "xutility": "cpp",
++        "bitset": "cpp",
++        "filesystem": "cpp",
++        "regex": "cpp",
++        "source_location": "cpp",
++        "span": "cpp",
++        "variant": "cpp",
++        "coroutine": "cpp",
++        "resumable": "cpp"
+     }
+ }
+\ No newline at end of file
+diff --git a/Board.cpp b/Board.cpp
+index 6c78c15..a9c8b11 100644
+--- a/Board.cpp
++++ b/Board.cpp
+@@ -1,5 +1,5 @@
+-#include "Board.h"
+ #include "pch.h"
++#include "Board.h"
+ 
+ int Board::s_indices[8][3] = {
+     // rows
+@@ -30,12 +30,12 @@ std::ostream& operator<<(std::ostream& os, const Piece& piece) {
+   return os;
+ }
+ 
+-std::ostream& operator<<(std::ostream& os, const Player& player) {
++std::ostream& operator<<(std::ostream& os, const PlayerSymbol& player) {
+   switch (player) {
+-  case Player::X:
++  case PlayerSymbol::X:
+     os << "X";
+     break;
+-  case Player::O:
++  case PlayerSymbol::O:
+     os << "O";
+     break;
+   }
+@@ -60,8 +60,8 @@ std::ostream& operator<<(std::ostream& os, const GameStatus& status) {
+   return os;
+ }
+ 
+-static Piece player2piece(Player player) {
+-  if (player == Player::X) {
++static Piece player2piece(PlayerSymbol player) {
++  if (player == PlayerSymbol::X) {
+     return Piece::X;
+   } else {
+     return Piece::O;
+@@ -69,9 +69,11 @@ static Piece player2piece(Player player) {
+ }
+ 
+ bool Board::IsBoardFull(int boardPosition) const {
+-  const Piece* start = m_board + boardPosition * 9;
+-  return std::all_of(start, start + 9,
+-                     [](Piece piece) { return piece != Piece::Empty; });
++  const auto& start = m_board.begin() + boardPosition * 9;
++  const auto& end = start + 9;
++  return std::all_of(start, end, [](Piece piece) {
++    return piece != Piece::Empty;
++  });
+ }
+ 
+ bool Board::IsMoveLegal(const Move& move) const {
+@@ -99,17 +101,16 @@ bool Board::IsMoveLegal(const Move& move) const {
+ 
+ void Board::Play(const Move& move) {
+   if (!IsMoveLegal(move)) {
+-    std::stringstream ss;
+-    ss << "Invalid move: " << move;
+-    throw std::invalid_argument(ss.str());
++    SPDLOG_CRITICAL("Invalid move {}", move);
+   }
+-  m_board[move.m_boardPosition * 9 + move.m_cellPosition] =
+-      player2piece(m_currentPlayer);
+-  m_currentPlayer = static_cast<Player>(-static_cast<int>(m_currentPlayer));
++  int index = move.m_boardPosition * 9 + move.m_cellPosition;
++  m_board[index] = player2piece(m_currentPlayer);
++  m_currentPlayer = GetOtherPlayer();
+   m_lastMove = move;
+ 
+   // update the status of the big board
+-  m_bigBoard[move.m_boardPosition] = GetGameStatus(move.m_boardPosition);
++  m_bigBoard[move.m_boardPosition] = CalcGameStatus(move.m_boardPosition);
++  m_topGameStatus = CalcGameStatus();
+ }
+ 
+ static Move ConvertIdxToMove(int idx) { return Move(idx / 9, idx % 9); }
+@@ -118,7 +119,14 @@ void Board::PrintPiece(std::ostream& os, int idx) const {
+   const Piece piece = m_board[idx];
+   const Move move = ConvertIdxToMove(idx);
+   if (m_lastMove && move == *m_lastMove) {
++    // red
+     os << "\033[1;31m" << piece << "\033[0m";
++  } else if (m_bigBoard[move.m_boardPosition] == GameStatus::XWins) {
++    // purple
++    os << "\033[1;35m" << piece << "\033[0m";
++  } else if (m_bigBoard[move.m_boardPosition] == GameStatus::OWins) {
++    // light blue
++    os << "\033[1;36m" << piece << "\033[0m";
+   } else {
+     os << piece;
+   }
+@@ -153,8 +161,9 @@ std::ostream& operator<<(std::ostream& os, const Board& game) {
+ 
+ GameStatus Board::GetGameStatus_IMPL(const Piece* board) const {
+   // check if the board is full
+-  if (std::all_of(board, board + 9,
+-                  [](Piece piece) { return piece != Piece::Empty; })) {
++  if (std::all_of(board, board + 9, [](Piece piece) {
++        return piece != Piece::Empty;
++      })) {
+     return GameStatus::Draw;
+   }
+ 
+@@ -164,36 +173,71 @@ GameStatus Board::GetGameStatus_IMPL(const Piece* board) const {
+     const int* indices = s_indices[i];
+     if (board[indices[0]] == piece && board[indices[1]] == piece &&
+         board[indices[2]] == piece) {
+-      return GetOtherPlayer() == Player::X ? GameStatus::XWins
+-                                           : GameStatus::OWins;
++      return GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
++                                                 : GameStatus::OWins;
+     }
+   }
+ 
+   return GameStatus::InProgress;
+ }
+ 
+-GameStatus Board::GetGameStatus(int boardPosition) const {
+-  return GetGameStatus_IMPL(m_board + boardPosition * 9);
++GameStatus Board::CalcGameStatus(int boardPosition) const {
++  return GetGameStatus_IMPL(m_board.data() + boardPosition * 9);
+ }
+ 
+-GameStatus Board::GetGameStatus() const {
+-  // if no boards are in progress, the game is a draw
+-  if (std::all_of(m_bigBoard, m_bigBoard + 9, [](GameStatus status) {
+-        return status != GameStatus::InProgress;
+-      })) {
+-    return GameStatus::Draw;
+-  }
+-
++GameStatus Board::CalcGameStatus() const {
+   // only the last player that played on the board can win
+-  GameStatus status =
+-      GetOtherPlayer() == Player::X ? GameStatus::XWins : GameStatus::OWins;
++  GameStatus status = GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
++                                                          : GameStatus::OWins;
+   for (int i = 0; i < 8; i++) {
+     const int* indices = s_indices[i];
+-    if (m_bigBoard[indices[0]] == status && m_bigBoard[indices[1]] == status &&
++    if (m_bigBoard[indices[0]] == status &&
++        m_bigBoard[indices[1]] == status &&
+         m_bigBoard[indices[2]] == status) {
+       return status;
+     }
+   }
+ 
++  // if no boards are in progress, the game is a draw
++  if (std::all_of(m_bigBoard.begin(), m_bigBoard.end(), [](GameStatus status) {
++        return status != GameStatus::InProgress;
++      })) {
++    return GameStatus::Draw;
++  }
++
+   return GameStatus::InProgress;
+ }
++
++std::size_t hash_value(const Board& board) {
++  SPDLOG_TRACE("Calculating hash value");
++  std::size_t seed = 0;
++  std::hash<int> int_hasher;
++
++  // Hash the main board
++  for (const auto& piece : board.m_board) {
++    seed ^= int_hasher(static_cast<int>(piece)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
++  }
++
++  // Hash the big board status
++  for (const auto& status : board.m_bigBoard) {
++    seed ^= int_hasher(static_cast<int>(status)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
++  }
++
++  // Hash the current player
++  seed ^= int_hasher(static_cast<int>(board.m_currentPlayer)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
++
++  // Hash the last move, if it exists
++  if (board.m_lastMove) {
++    seed ^= int_hasher(board.m_lastMove->m_boardPosition) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
++    seed ^= int_hasher(board.m_lastMove->m_cellPosition) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
++  }
++
++  return seed;
++}
++
++bool operator==(const Board& lhs, const Board& rhs) {
++  return lhs.m_board == rhs.m_board &&
++         lhs.m_bigBoard == rhs.m_bigBoard &&
++         lhs.m_currentPlayer == rhs.m_currentPlayer &&
++         lhs.m_lastMove == rhs.m_lastMove;
++}
+\ No newline at end of file
+diff --git a/Board.h b/Board.h
+index 52eeb38..4e68684 100644
+--- a/Board.h
++++ b/Board.h
+@@ -9,13 +9,17 @@ enum class Piece {
+ };
+ 
+ std::ostream& operator<<(std::ostream& os, const Piece& piece);
++template <>
++struct fmt::formatter<Piece> : fmt::ostream_formatter {};
+ 
+-enum class Player {
++enum class PlayerSymbol {
+   X = 1,
+   O = -1
+ };
+ 
+-std::ostream& operator<<(std::ostream& os, const Player& player);
++std::ostream& operator<<(std::ostream& os, const PlayerSymbol& player);
++template <>
++struct fmt::formatter<PlayerSymbol> : fmt::ostream_formatter {};
+ 
+ enum class GameStatus {
+   InProgress,
+@@ -25,37 +29,53 @@ enum class GameStatus {
+ };
+ 
+ std::ostream& operator<<(std::ostream& os, const GameStatus& status);
++template <>
++struct fmt::formatter<GameStatus> : fmt::ostream_formatter {};
+ 
+ class Board {
+ public:
+   Board() = default;
++  friend bool operator==(const Board& lhs, const Board& rhs);
+   bool IsMoveLegal(const Move& move) const;
+   void Play(const Move& move);
+-  Player GetCurrentPlayer() const { return m_currentPlayer; }
+-  Player GetOtherPlayer() const {
+-    return static_cast<Player>(-static_cast<int>(m_currentPlayer));
++  PlayerSymbol GetCurrentPlayer() const { return m_currentPlayer; }
++  PlayerSymbol GetOtherPlayer() const {
++    return static_cast<PlayerSymbol>(-static_cast<int>(m_currentPlayer));
+   }
+-
+-  // Get the game status for the entire board
+-  GameStatus GetGameStatus() const;
+-  // Get the game status for a specific sub board
+-  GameStatus GetGameStatus(int boardPosition) const;
++  inline GameStatus GetTopGameStatus() { return m_topGameStatus; }
+ 
+   inline bool IsGameOver() const {
+-    return GetGameStatus() != GameStatus::InProgress;
++    return m_topGameStatus != GameStatus::InProgress;
+   }
+   friend std::ostream& operator<<(std::ostream& os, const Board& board);
++  friend std::size_t hash_value(const Board& board);
+ 
+ private:
++  // Get the game status for the entire board
++  GameStatus CalcGameStatus() const;
++  // Get the game status for a specific sub board
++  GameStatus CalcGameStatus(int boardPosition) const;
++
+   bool IsBoardFull(int boardPosition) const;
+   void PrintPiece(std::ostream& os, int idx) const;
+   GameStatus GetGameStatus_IMPL(const Piece* board) const;
+ 
+-  Piece m_board[9 * 9] = {Piece::Empty};
+-  GameStatus m_bigBoard[9] = {GameStatus::InProgress};
++  std::array<Piece, 9 * 9> m_board = {Piece::Empty};
++  std::array<GameStatus, 9> m_bigBoard = {GameStatus::InProgress};
++  GameStatus m_topGameStatus = GameStatus::InProgress;
+ 
+-  Player m_currentPlayer = Player::X;
++  PlayerSymbol m_currentPlayer = PlayerSymbol::X;
+   std::optional<Move> m_lastMove;
+ 
+   static int s_indices[8][3];
+-};
+\ No newline at end of file
++};
++
++// make the Board hashable
++namespace std {
++template <>
++struct hash<Board> {
++  std::size_t operator()(const Board& board) const {
++    return hash_value(board);
++  }
++};
++} // namespace std
+\ No newline at end of file
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d370f05..a0e167a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,30 +6,27 @@ set(CMAKE_CXX_STANDARD 20)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+-# Add GLFW submodule
+-add_subdirectory(external/glfw)
+-
+-include_directories(external/glfw/include)
++# Add submodules
++add_subdirectory(external/spdlog)
++include_directories(external/spdlog/include)
++include_directories(.)
+ 
+ # Automatically add all .cpp files to the executable
+ # search recursively for all .cpp files in the current directory
+ # except in the build directory
+ file(GLOB_RECURSE CPP_FILES *.cpp)
+ list(FILTER CPP_FILES EXCLUDE REGEX "build/")
++list(FILTER CPP_FILES EXCLUDE REGEX "external/")
+ 
+ message("CPP_FILES: ${CPP_FILES}")
+ 
+ add_executable(extreme_ttt ${CPP_FILES})
+-
+-# Specify the path to the glfw3.a library
+-set(GLFW_LIB_PATH ${CMAKE_BINARY_DIR}/external/glfw/src/libglfw3.a)
+-
+-# Link with glfw3.a and GL
+-target_link_libraries(extreme_ttt ${GLFW_LIB_PATH})
+-target_link_libraries(extreme_ttt GL)
++if(MSVC)
++  target_compile_options(extreme_ttt PRIVATE /W4 /WX)
++else()
++  target_compile_options(extreme_ttt PRIVATE -Wall -Wextra -Wpedantic -Werror)
++endif()
+ 
+ # Add precompiled header
+ set(PCH_FILE pch.h)
+-
+-# Create precompiled header target
+-target_precompile_headers(extreme_ttt PRIVATE ${PCH_FILE})
++target_precompile_headers(extreme_ttt PRIVATE ${PCH_FILE})
+\ No newline at end of file
+diff --git a/Game.cpp b/Game.cpp
+index 3217742..49c9a5d 100644
+--- a/Game.cpp
++++ b/Game.cpp
+@@ -1,32 +1,43 @@
+-#include "Game.h"
+ #include "pch.h"
++#include "Game.h"
++#include "players/MinMaxPlayer.h"
+ 
+-void Game::RegisterPlayer(std::unique_ptr<PlayerInterface> player) {
++void Game::RegisterPlayer(std::unique_ptr<Player> player) {
+   if (!m_playerX) {
+     m_playerX = std::move(player);
+-    m_playerX->SetPlayer(Player::X);
++    m_playerX->SetPlayer(PlayerSymbol::X);
++    SPDLOG_INFO("Registed player X");
+   } else {
+     m_playerO = std::move(player);
+-    m_playerX->SetPlayer(Player::O);
++    m_playerX->SetPlayer(PlayerSymbol::O);
++    SPDLOG_INFO("Registed player O");
+   }
+ }
+ 
+ GameStatus Game::Run() {
++  SPDLOG_INFO("Running the game");
++  std::hash<Board> hasher;
+   std::cout << m_board << '\n';
+ 
+   while (!m_board.IsGameOver()) {
+-    if (m_board.GetCurrentPlayer() == Player::X) {
+-      Move m = m_playerX->GetMove();
++    Move m;
++    PlayerSymbol player = m_board.GetCurrentPlayer();
++    if (player == PlayerSymbol::X) {
++      m = m_playerX->GetMove();
+       m_board.Play(m);
+       m_playerO->ReceiveMove(m);
+     } else {
+-      Move m = m_playerO->GetMove();
++      m = m_playerO->GetMove();
+       m_board.Play(m);
+       m_playerX->ReceiveMove(m);
+     }
+ 
++    SPDLOG_INFO("{} played {}", player, m);
++    SPDLOG_DEBUG("New hash {}", hasher(m_board));
++
+     std::cout << m_board << '\n';
+   }
+ 
+-  return m_board.GetGameStatus();
++  SPDLOG_INFO("Game is over");
++  return m_board.GetTopGameStatus();
+ }
+diff --git a/Game.h b/Game.h
+index 4554d42..bafb014 100644
+--- a/Game.h
++++ b/Game.h
+@@ -1,14 +1,14 @@
+ #pragma once
+-#include "players/PlayerInterface.h"
++#include "players/Player.h"
+ 
+ class Game {
+ public:
+   Game() = default;
+   GameStatus Run();
+-  void RegisterPlayer(std::unique_ptr<PlayerInterface> player);
++  void RegisterPlayer(std::unique_ptr<Player> player);
+ 
+ private:
+   Board m_board;
+-  std::unique_ptr<PlayerInterface> m_playerX;
+-  std::unique_ptr<PlayerInterface> m_playerO;
++  std::unique_ptr<Player> m_playerX;
++  std::unique_ptr<Player> m_playerO;
+ };
+\ No newline at end of file
+diff --git a/Main.cpp b/Main.cpp
+index ca81fd7..8c5f2ed 100644
+--- a/Main.cpp
++++ b/Main.cpp
+@@ -1,19 +1,20 @@
++#include "pch.h"
++
+ #include "Board.h"
+ #include "Game.h"
+-#include "pch.h"
+ #include "players/HumanPlayer.h"
+ #include "players/MinMaxPlayer.h"
+ #include "players/RandomPlayer.h"
+ 
+ int main(void) {
+-  srand(time(0));
++  spdlog::set_level(spdlog::level::info);
++  SPDLOG_INFO("Starting EXTREME TIC TAC TOE!");
+ 
+   Game game;
+-  game.RegisterPlayer(std::make_unique<MinMaxPlayer>());
++  game.RegisterPlayer(std::make_unique<RandomPlayer>());
+   game.RegisterPlayer(std::make_unique<RandomPlayer>());
+ 
+   GameStatus status = game.Run();
+-  std::cout << status << '\n';
+-
++  SPDLOG_INFO("Game exited with status {}", status);
+   return 0;
+ }
+diff --git a/Move.cpp b/Move.cpp
+index b0176bb..9906355 100644
+--- a/Move.cpp
++++ b/Move.cpp
+@@ -1,5 +1,5 @@
+-#include "Move.h"
+ #include "pch.h"
++#include "Move.h"
+ 
+ std::ostream& operator<<(std::ostream& os, const Move& move) {
+   os << "Move(" << move.m_boardPosition << ", " << move.m_cellPosition << ")";
+diff --git a/Move.h b/Move.h
+index b2d80df..9f95c8b 100644
+--- a/Move.h
++++ b/Move.h
+@@ -3,12 +3,16 @@
+ struct Move {
+   int m_boardPosition;
+   int m_cellPosition;
++
++  Move() = default;
+   Move(int boardPosition, int cellPosition)
+       : m_boardPosition(boardPosition), m_cellPosition(cellPosition) {
+-    if (boardPosition < 0 || boardPosition > 8 || cellPosition < 0 ||
+-        cellPosition > 8) {
++
++#ifndef NDEBUG
++    if (boardPosition < 0 || boardPosition > 8 ||
++        cellPosition < 0 || cellPosition > 8)
+       throw std::invalid_argument("Invalid move");
+-    }
++#endif
+   }
+   bool operator==(const Move& other) const {
+     return m_boardPosition == other.m_boardPosition &&
+@@ -16,4 +20,6 @@ struct Move {
+   }
+ };
+ 
+-std::ostream& operator<<(std::ostream& os, const Move& move);
+\ No newline at end of file
++std::ostream& operator<<(std::ostream& os, const Move& move);
++template <>
++struct fmt::formatter<Move> : fmt::ostream_formatter {};
+diff --git a/external/spdlog b/external/spdlog
+new file mode 160000
+index 0000000..e593f66
+--- /dev/null
++++ b/external/spdlog
+@@ -0,0 +1 @@
++Subproject commit e593f6695c6065e6b345fe2862f04a519ed484e0
+diff --git a/pch.h b/pch.h
+index 350da8e..9fcec64 100644
+--- a/pch.h
++++ b/pch.h
+@@ -9,6 +9,7 @@
+ 
+ // add headers that you want to pre-compile here
+ #include <algorithm>
++#include <array>
+ #include <atomic>
+ #include <chrono>
+ #include <cmath>
+@@ -23,6 +24,7 @@
+ #include <memory>
+ #include <mutex>
+ #include <optional>
++#include <random>
+ #include <set>
+ #include <sstream>
+ #include <stdexcept>
+@@ -32,4 +34,8 @@
+ #include <unordered_map>
+ #include <unordered_set>
+ #include <utility>
+-#include <vector>
+\ No newline at end of file
++#include <vector>
++
++#define SPDLOG_ACTIVE_LEVEL 0
++#include "spdlog/spdlog.h"
++#include "spdlog/fmt/ostr.h"
+\ No newline at end of file
+diff --git a/players/HumanPlayer.h b/players/HumanPlayer.h
+index 702d428..19e848c 100644
+--- a/players/HumanPlayer.h
++++ b/players/HumanPlayer.h
+@@ -1,14 +1,14 @@
+ #pragma once
+-#include "PlayerInterface.h"
++#include "Player.h"
+ 
+-class HumanPlayer : public PlayerInterface {
++class HumanPlayer : public Player {
+ public:
+   virtual void Reset() override {}
+-  virtual void ReceiveMove(const Move& move) override {}
+-  virtual void SetPlayer(Player player) override { m_player = player; }
++  virtual void ReceiveMove(const Move&) override {}
++  virtual void SetPlayer(PlayerSymbol player) override { m_player = player; }
+ 
+   virtual Move GetMove() override {
+-    std::cout << "Player " << m_player << " move" << std::endl;
++    std::cout << "Player " << m_player << " move\n";
+     int boardPosition;
+     int cellPosition;
+     std::cout << "Enter board position: ";
+@@ -19,5 +19,5 @@ public:
+   }
+ 
+ private:
+-  Player m_player;
++  PlayerSymbol m_player;
+ };
+\ No newline at end of file
+diff --git a/players/MinMaxPlayer.cpp b/players/MinMaxPlayer.cpp
+new file mode 100644
+index 0000000..e54e962
+--- /dev/null
++++ b/players/MinMaxPlayer.cpp
+@@ -0,0 +1,51 @@
++#include "pch.h"
++#include "MinMaxPlayer.h"
++
++int MinMaxPlayer::attempted = 0;
++int MinMaxPlayer::found = 0;
++std::unordered_map<Board, Score> MinMaxPlayer::s_scoreMap;
++
++Move MinMaxPlayer::GetMove() {
++  return Move();
++}
++
++Score MinMaxPlayer::Negamax(const Board& board, int depth, Score alpha, Score beta, int weight) {
++  if (depth == 0 || board.IsGameOver()) {
++    return weight * StaticAnalysis(board);
++  }
++  return alpha + beta;
++}
++/*
++function negamax(node, depth, ╬▒, ╬▓, color) is
++    if depth = 0 or node is a terminal node then
++        return color ├ù the heuristic value of node
++
++    childNodes := generateMoves(node)
++    childNodes := orderMoves(childNodes)
++    value := ÔêÆÔê×
++    foreach child in childNodes do
++        value := max(value, ÔêÆnegamax(child, depth ÔêÆ 1, ÔêÆ╬▓, ÔêÆ╬▒, ÔêÆcolor))
++        ╬▒ := max(╬▒, value)
++        if ╬▒ ÔëÑ ╬▓ then
++            break (* cut-off *)
++    return value
++*/
++
++Score MinMaxPlayer::StaticAnalysis(const Board& board) {
++  // find out if Score is cached, and return that instead
++  attempted++;
++  const auto& result = s_scoreMap.find(board);
++  if (result != s_scoreMap.end()) {
++    found++;
++    return result->second;
++  }
++
++  Score score = CalcStaticAnalysis(board);
++  s_scoreMap[board] = score;
++  return score;
++}
++
++Score MinMaxPlayer::CalcStaticAnalysis(const Board&) {
++  // TODO
++  return Score();
++}
+diff --git a/players/MinMaxPlayer.h b/players/MinMaxPlayer.h
+index 1b4cd2b..be71e2f 100644
+--- a/players/MinMaxPlayer.h
++++ b/players/MinMaxPlayer.h
+@@ -1,20 +1,23 @@
+ #pragma once
+-#include "PlayerInterface.h"
++#include "Player.h"
+ 
+-struct Node {
+-  Move move;
+-  Board board;
+-  std::vector<std::unique_ptr<Node>> children;
+-};
++typedef uint32_t Score;
+ 
+-class MinMaxPlayer : public PlayerInterface {
++class MinMaxPlayer : public Player {
+ public:
+   virtual void Reset() override {}
+-  virtual void ReceiveMove(const Move& move) override {}
+-  virtual void SetPlayer(Player player) override { m_player = player; }
+-
+-  virtual Move GetMove() override { return Move(0, 0); }
++  virtual void ReceiveMove(const Move&) override {}
++  virtual void SetPlayer(PlayerSymbol player) override { m_player = player; }
++  virtual Move GetMove() override;
++  Score Negamax(const Board& board, int depth, Score alpha, Score beta, int weigth);
++  Score StaticAnalysis(const Board& board);
++  static float HitRatio() { return ((found * 1.0f) / (attempted * 1.0f)); }
+ 
+ private:
+-  Player m_player;
++  Score CalcStaticAnalysis(const Board& board);
++  static std::unordered_map<Board, Score> s_scoreMap;
++  static int attempted;
++  static int found;
++  PlayerSymbol m_player;
++  Board m_mainBoard;
+ };
+\ No newline at end of file
+diff --git a/players/PlayerInterface.h b/players/Player.h
+similarity index 63%
+rename from players/PlayerInterface.h
+rename to players/Player.h
+index 6ff6046..0a5bbc1 100644
+--- a/players/PlayerInterface.h
++++ b/players/Player.h
+@@ -2,11 +2,11 @@
+ #include "../Board.h"
+ #include "../Move.h"
+ 
+-class PlayerInterface {
++class Player {
+ public:
+-  virtual ~PlayerInterface(){};
++  virtual ~Player() {};
+   virtual Move GetMove() = 0;
+   virtual void Reset() = 0;
+   virtual void ReceiveMove(const Move& move) = 0;
+-  virtual void SetPlayer(Player player) = 0;
++  virtual void SetPlayer(PlayerSymbol player) = 0;
+ };
+\ No newline at end of file
+diff --git a/players/RandomPlayer.h b/players/RandomPlayer.h
+index eb4e0ba..6c59f27 100644
+--- a/players/RandomPlayer.h
++++ b/players/RandomPlayer.h
+@@ -1,29 +1,35 @@
+ #pragma once
+-#include "PlayerInterface.h"
++#include "Player.h"
+ 
+-class RandomPlayer : public PlayerInterface {
++class RandomPlayer : public Player {
+ public:
++  RandomPlayer() {
++    std::random_device dev;
++    m_rng = std::mt19937(dev());
++  }
+   virtual void Reset() override {}
+-  virtual void SetPlayer(Player player) override { m_player = player; }
++  virtual void SetPlayer(PlayerSymbol player) override { m_player = player; }
+ 
+-  virtual void ReceiveMove(const Move& move) override { m_Board.Play(move); }
++  virtual void ReceiveMove(const Move& move) override { m_board.Play(move); }
+ 
+   virtual Move GetMove() override {
++    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 8);
+     while (true) {
+-      int boardPosition = rand() % 9;
+-      int cellPosition = rand() % 9;
++      int boardPosition = dist(m_rng);
++      int cellPosition = dist(m_rng);
+       Move move(boardPosition, cellPosition);
+-      if (m_Board.IsMoveLegal(move)) {
+-        std::cout << m_player << " " << move.m_boardPosition << ", "
+-                  << move.m_cellPosition << '\n';
++      if (m_board.IsMoveLegal(move)) {
++        using namespace std::chrono_literals;
+ 
+-        m_Board.Play(move);
++        std::this_thread::sleep_for(200ms);
++        m_board.Play(move);
+         return move;
+       }
+     }
+   }
+ 
+ private:
+-  Player m_player;
+-  Board m_Board;
++  PlayerSymbol m_player;
++  Board m_board;
++  std::mt19937 m_rng;
+ };
+\ No newline at end of file
