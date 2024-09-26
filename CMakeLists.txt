@@ -30,3 +30,12 @@ endif()
 # Add precompiled header
 set(PCH_FILE pch.h)
 target_precompile_headers(extreme_ttt PRIVATE ${PCH_FILE})
+
+# Include CPack module
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "MyProject")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_CONTACT "your.email@example.com")
+
+install(TARGETS extreme_ttt RUNTIME DESTINATION bin)
+include(CPack)
