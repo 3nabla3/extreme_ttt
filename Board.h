@@ -35,6 +35,8 @@ struct fmt::formatter<GameStatus> : fmt::ostream_formatter {};
 class Board {
 public:
   Board() = default;
+  Board(std::string boardStr, const Move& lastMove);
+
   friend bool operator==(const Board& lhs, const Board& rhs);
   bool IsMoveLegal(const Move& move) const;
   void Play(const Move& move);
@@ -42,13 +44,15 @@ public:
   PlayerSymbol GetOtherPlayer() const {
     return static_cast<PlayerSymbol>(-static_cast<int>(m_currentPlayer));
   }
-  inline GameStatus GetTopGameStatus() { return m_topGameStatus; }
+  inline GameStatus GetTopGameStatus() const { return m_topGameStatus; }
 
   inline bool IsGameOver() const {
     return m_topGameStatus != GameStatus::InProgress;
   }
   friend std::ostream& operator<<(std::ostream& os, const Board& board);
   friend std::size_t hash_value(const Board& board);
+
+  std::array<GameStatus, 9> GetBigBoard() const { return m_bigBoard; }
 
 private:
   // Get the game status for the entire board
@@ -67,7 +71,7 @@ private:
   PlayerSymbol m_currentPlayer = PlayerSymbol::X;
   std::optional<Move> m_lastMove;
 
-  static int s_indices[8][3];
+  static std::array<std::array<int, 3>, 8> s_indices;
 };
 
 // make the Board hashable

@@ -4,6 +4,8 @@
 class Game {
 public:
   Game() = default;
+  Game(const Board& board) : m_board(board) {}
+
   GameStatus Run();
   void RegisterPlayer(std::unique_ptr<Player> player);
 

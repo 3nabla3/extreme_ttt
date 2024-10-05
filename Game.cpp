@@ -9,17 +9,20 @@ void Game::RegisterPlayer(std::unique_ptr<Player> player) {
     SPDLOG_INFO("Registed player X");
   } else {
     m_playerO = std::move(player);
-    m_playerX->SetPlayer(PlayerSymbol::O);
+    m_playerO->SetPlayer(PlayerSymbol::O);
     SPDLOG_INFO("Registed player O");
   }
 }
 
 GameStatus Game::Run() {
   SPDLOG_INFO("Running the game");
-  std::hash<Board> hasher;
   std::cout << m_board << '\n';
 
   while (!m_board.IsGameOver()) {
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(1000ms);
+    SPDLOG_INFO("Waiting for a move");
+
     Move m;
     PlayerSymbol player = m_board.GetCurrentPlayer();
     if (player == PlayerSymbol::X) {
@@ -33,7 +36,7 @@ GameStatus Game::Run() {
     }
 
     SPDLOG_INFO("{} played {}", player, m);
-    SPDLOG_DEBUG("New hash {}", hasher(m_board));
+    SPDLOG_DEBUG("New hash {}", std::hash<Board>{}(m_board));
 
     std::cout << m_board << '\n';
   }

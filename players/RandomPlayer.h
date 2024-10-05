@@ -19,9 +19,6 @@ public:
       int cellPosition = dist(m_rng);
       Move move(boardPosition, cellPosition);
       if (m_board.IsMoveLegal(move)) {
-        using namespace std::chrono_literals;
-
-        std::this_thread::sleep_for(200ms);
         m_board.Play(move);
         return move;
       }

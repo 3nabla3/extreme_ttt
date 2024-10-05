@@ -1,19 +1,19 @@
 #include "pch.h"
 #include "Board.h"
 
-int Board::s_indices[8][3] = {
+std::array<std::array<int, 3>, 8> Board::s_indices = {{
     // rows
-    {0, 1, 2},
-    {3, 4, 5},
-    {6, 7, 8},
+    {{0, 1, 2}},
+    {{3, 4, 5}},
+    {{6, 7, 8}},
     // columns
-    {0, 3, 6},
-    {1, 4, 7},
-    {2, 5, 8},
+    {{0, 3, 6}},
+    {{1, 4, 7}},
+    {{2, 5, 8}},
     // diags
-    {0, 4, 8},
-    {2, 4, 6},
-};
+    {{0, 4, 8}},
+    {{2, 4, 6}},
+}};
 
 std::ostream& operator<<(std::ostream& os, const Piece& piece) {
   switch (piece) {
@@ -66,6 +66,73 @@ static Piece player2piece(PlayerSymbol player) {
   } else {
     return Piece::O;
   }
+}
+
+Board::Board(std::string boardStr, const Move& lastMove)
+    : m_lastMove(lastMove) {
+  // remove all whitespace
+  boardStr.erase(std::remove_if(boardStr.begin(), boardStr.end(), ::isspace),
+                 boardStr.end());
+  // count number of X and O
+  int xCount = std::count(boardStr.begin(), boardStr.end(), 'x');
+  int oCount = std::count(boardStr.begin(), boardStr.end(), 'o');
+
+  // check if the board is valid
+  if (xCount < oCount || xCount > oCount + 1) {
+    SPDLOG_CRITICAL("Invalid board string");
+  }
+
+  // initialize the board
+  // probably a clearer way of doing this
+  // but it works for now
+  int strIdx = 0;
+  int boardIdx = 0;
+  for (int bigRow = 0; bigRow < 3; bigRow++) {
+    for (int bigCol = 0; bigCol < 3; bigCol++) {
+      for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+          char c = boardStr[strIdx++];
+          Piece piece;
+          if (c == 'x') {
+            piece = Piece::X;
+          } else if (c == 'o') {
+            piece = Piece::O;
+          } else {
+            piece = Piece::Empty;
+          }
+          m_board[boardIdx++] = piece;
+        }
+        boardIdx += 6; // Skip to the next row in the big grid
+      }
+      boardIdx -= 24; // Move back to the start of the next big cell
+    }
+    boardIdx += 18; // Skip to the next big row
+  }
+
+  // We have to calculate the status of the big board
+  // twice because it will only
+  // check for the last player that played
+  // (this is a necessary optimization)
+  m_currentPlayer = PlayerSymbol::X;
+  for (int i = 0; i < 9; i++) {
+    m_bigBoard[i] = CalcGameStatus(i);
+  }
+  m_topGameStatus = CalcGameStatus();
+
+  m_currentPlayer = PlayerSymbol::O;
+  for (int i = 0; i < 9; i++) {
+    // if we dont find a win for O we dont want
+    // to overwrite the win for X
+    if (m_bigBoard[i] != GameStatus::InProgress)
+      continue;
+    m_bigBoard[i] = CalcGameStatus(i);
+  }
+  m_topGameStatus = CalcGameStatus();
+
+  // now we can set the actual current player
+  m_currentPlayer = xCount == oCount ? PlayerSymbol::X : PlayerSymbol::O;
+
+  SPDLOG_DEBUG("Initialized board with last move {}", lastMove);
 }
 
 bool Board::IsBoardFull(int boardPosition) const {
@@ -170,7 +237,7 @@ GameStatus Board::GetGameStatus_IMPL(const Piece* board) const {
   // only the last player that played in the board can win
   Piece piece = player2piece(GetOtherPlayer());
   for (int i = 0; i < 8; i++) {
-    const int* indices = s_indices[i];
+    const auto& indices = s_indices[i];
     if (board[indices[0]] == piece && board[indices[1]] == piece &&
         board[indices[2]] == piece) {
       return GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
@@ -190,7 +257,7 @@ GameStatus Board::CalcGameStatus() const {
   GameStatus status = GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
                                                           : GameStatus::OWins;
   for (int i = 0; i < 8; i++) {
-    const int* indices = s_indices[i];
+    const auto& indices = s_indices[i];
     if (m_bigBoard[indices[0]] == status &&
         m_bigBoard[indices[1]] == status &&
         m_bigBoard[indices[2]] == status) {
@@ -209,7 +276,6 @@ GameStatus Board::CalcGameStatus() const {
 }
 
 std::size_t hash_value(const Board& board) {
-  SPDLOG_TRACE("Calculating hash value");
   std::size_t seed = 0;
   std::hash<int> int_hasher;
 
@@ -228,7 +294,6 @@ std::size_t hash_value(const Board& board) {
 
   // Hash the last move, if it exists
   if (board.m_lastMove) {
-    seed ^= int_hasher(board.m_lastMove->m_boardPosition) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     seed ^= int_hasher(board.m_lastMove->m_cellPosition) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
   }
 
