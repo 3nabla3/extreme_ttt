@@ -6,14 +6,14 @@ typedef int32_t Score;
 class MinMaxPlayer : public Player {
 public:
   MinMaxPlayer() = default;
-
-  MinMaxPlayer(const Board& initialBoard) : m_mainBoard(initialBoard) {
-    SPDLOG_TRACE("Creating MinMaxPlayer with initial board");
-  }
-
   virtual void Reset() override {}
   virtual void ReceiveMove(const Move&) override;
-  virtual void SetPlayer(PlayerSymbol player) override { m_player = player; }
+  virtual void Initialize(PlayerSymbol player, const Board& board) override {
+    SPDLOG_TRACE("Initializing MinMaxPlayer with player: {}", player);
+    m_player = player;
+    m_mainBoard = board;
+  }
+
   virtual Move GetMove() override;
   Score Negamax(const Board& board, int depth, Score alpha, Score beta, int weigth);
   Score StaticAnalysis(const Board& board);

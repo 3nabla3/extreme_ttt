@@ -5,7 +5,9 @@ class HumanPlayer : public Player {
 public:
   virtual void Reset() override {}
   virtual void ReceiveMove(const Move&) override {}
-  virtual void SetPlayer(PlayerSymbol player) override { m_player = player; }
+  virtual void Initialize(PlayerSymbol player, const Board&) override {
+    m_player = player;
+  }
 
   virtual Move GetMove() override {
     std::cout << "Player " << m_player << " move\n";

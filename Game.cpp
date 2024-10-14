@@ -5,11 +5,11 @@
 void Game::RegisterPlayer(std::unique_ptr<Player> player) {
   if (!m_playerX) {
     m_playerX = std::move(player);
-    m_playerX->SetPlayer(PlayerSymbol::X);
+    m_playerX->Initialize(PlayerSymbol::X, m_board);
     SPDLOG_INFO("Registed player X");
   } else {
     m_playerO = std::move(player);
-    m_playerO->SetPlayer(PlayerSymbol::O);
+    m_playerO->Initialize(PlayerSymbol::O, m_board);
     SPDLOG_INFO("Registed player O");
   }
 }

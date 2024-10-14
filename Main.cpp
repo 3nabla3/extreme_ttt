@@ -44,7 +44,7 @@ x	.	.	.	x	x	.	o	.
 
   Game game(initialBoard);
   game.RegisterPlayer(std::make_unique<HumanPlayer>());
-  game.RegisterPlayer(std::make_unique<MinMaxPlayer>(initialBoard));
+  game.RegisterPlayer(std::make_unique<MinMaxPlayer>());
 
   GameStatus status = game.Run();
   SPDLOG_INFO("Game exited with status {}", status);
