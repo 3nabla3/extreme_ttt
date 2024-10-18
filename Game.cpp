@@ -175,6 +175,9 @@ void Game::RenderSmallPieces() {
 
 void Game::RenderBigPieces() {
   const int kBoardSize = 3;
+  // we want the big pieces to be thicker than the small
+  const float thickness = 7.f;
+
   glLoadIdentity();
   glOrtho(0, kBoardSize, 0, kBoardSize, -1, 1);
   for (int row = 0; row < kBoardSize; ++row) {
@@ -183,10 +186,10 @@ void Game::RenderBigPieces() {
       int renderRow = kBoardSize - 1 - row;
       if (status == GameStatus::XWins) {
         GLfloat red[3] = {0.6f, 0.f, 0.f};
-        RenderX(renderRow, col, red);
+        RenderX(renderRow, col, red, thickness);
       } else if (status == GameStatus::OWins) {
         GLfloat blue[3] = {0.f, 0.f, 0.6f};
-        RenderO(renderRow, col, blue);
+        RenderO(renderRow, col, blue, thickness);
       }
     }
   }

@@ -78,9 +78,9 @@ void RenderBigBoard() {
  * @param col the column to render the X at
  * @param color the color to render the X in, as an array of 3 GLfloats
  */
-void RenderX(int row, int col, const GLfloat* color) {
+void RenderX(int row, int col, const GLfloat* color, float thickness = 3.f) {
   glColor3fv(color);
-  glLineWidth(3);
+  glLineWidth(thickness);
   glBegin(GL_LINES);
   glVertex2f(col + 0.2f, row + 0.2f);
   glVertex2f(col + 0.8f, row + 0.8f);
@@ -99,8 +99,9 @@ void RenderX(int row, int col, const GLfloat* color) {
  * @param col the column to render the O at
  * @param color the color to render the O in, as an array of 3 GLfloats
  */
-void RenderO(int row, int col, const GLfloat* color) {
+void RenderO(int row, int col, const GLfloat* color, float thickness = 3.f) {
   glColor3fv(color);
+  glLineWidth(thickness);
   glBegin(GL_LINE_LOOP);
   for (int i = 0; i <= 100; ++i) {
     const GLfloat angle = 2.0f * 3.14159f * i / 100.0f;
