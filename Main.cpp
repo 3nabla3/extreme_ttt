@@ -42,16 +42,16 @@ x	.	.	.	x	x	.	o	.
   // )";
   //   Board initialBoard(initiailBoardStr, Move(7, 2));
 
-  Game game(initialBoard);
-  game.RegisterPlayer(std::make_unique<HumanPlayer>());
+  // Game game(initialBoard);
+  Game game;
+  game.RegisterPlayer(std::make_unique<MinMaxPlayer>());
   game.RegisterPlayer(std::make_unique<MinMaxPlayer>());
 
-  GameStatus status = game.Run();
-  SPDLOG_INFO("Game exited with status {}", status);
+  game.RunGUI();
 
   SPDLOG_INFO("Cache hit ratio: {}", MinMaxPlayer::HitRatio());
   std::pair<int, int> stats = MinMaxPlayer::HitStats();
-  SPDLOG_INFO("\tAttempted: {}, Found: {}", stats.first, stats.second);
+  SPDLOG_INFO("\t\tAttempted: {}, Found: {}", stats.first, stats.second);
 
   return 0;
 }

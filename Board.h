@@ -32,6 +32,12 @@ std::ostream& operator<<(std::ostream& os, const GameStatus& status);
 template <>
 struct fmt::formatter<GameStatus> : fmt::ostream_formatter {};
 
+Move ConvertIdxToMove(int idx);
+
+// caches a mapping for a piece in format
+// (row * 9 + col) to an index in m_board
+extern const std::array<int, 9 * 9> s_boardIndexConversion;
+
 class Board {
 public:
   Board() = default;
@@ -45,6 +51,7 @@ public:
     return static_cast<PlayerSymbol>(-static_cast<int>(m_currentPlayer));
   }
   inline GameStatus GetTopGameStatus() const { return m_topGameStatus; }
+  inline std::optional<Move> GetLastMove() const { return m_lastMove; }
 
   inline bool IsGameOver() const {
     return m_topGameStatus != GameStatus::InProgress;
@@ -53,6 +60,8 @@ public:
   friend std::size_t hash_value(const Board& board);
 
   std::array<GameStatus, 9> GetBigBoard() const { return m_bigBoard; }
+  inline Piece GetPieceAt(int board, int cell) const { return m_board[board * 9 + cell]; }
+  inline Piece GetPieceAtRowCol(int row, int col) const { return m_board[s_boardIndexConversion[row * 9 + col]]; }
 
 private:
   // Get the game status for the entire board
@@ -61,7 +70,7 @@ private:
   GameStatus CalcGameStatus(int boardPosition) const;
 
   bool IsBoardFull(int boardPosition) const;
-  void PrintPiece(std::ostream& os, int idx) const;
+  void PrintPiece(std::ostream& os, int row, int col) const;
   GameStatus GetGameStatus_IMPL(const Piece* board) const;
 
   std::array<Piece, 9 * 9> m_board = {Piece::Empty};
@@ -71,7 +80,7 @@ private:
   PlayerSymbol m_currentPlayer = PlayerSymbol::X;
   std::optional<Move> m_lastMove;
 
-  static std::array<std::array<int, 3>, 8> s_indices;
+  static const std::array<std::array<int, 3>, 8> s_indices;
 };
 
 // make the Board hashable

@@ -8,7 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Add submodules
 add_subdirectory(external/spdlog)
+add_subdirectory(external/glfw)
 include_directories(external/spdlog/include)
+include_directories(external/glfw/include)
 include_directories(.)
 
 # Automatically add all .cpp files to the executable
@@ -23,8 +25,9 @@ message("CPP_FILES: ${CPP_FILES}")
 add_executable(extreme_ttt ${CPP_FILES})
 if(MSVC)
   target_compile_options(extreme_ttt PRIVATE /W4 /WX)
-else()
+elseif(UNIX)
   target_compile_options(extreme_ttt PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  target_link_libraries(extreme_ttt glfw GL)
 endif()
 
 # Add precompiled header

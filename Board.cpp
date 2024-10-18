@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Board.h"
 
-std::array<std::array<int, 3>, 8> Board::s_indices = {{
+const std::array<std::array<int, 3>, 8> Board::s_indices = {{
     // rows
     {{0, 1, 2}},
     {{3, 4, 5}},
@@ -14,6 +14,32 @@ std::array<std::array<int, 3>, 8> Board::s_indices = {{
     {{0, 4, 8}},
     {{2, 4, 6}},
 }};
+
+/**
+ * Initializes the mapping for s_boardIndexConversion
+ */
+constexpr std::array<int, 9 * 9> calcBoardIndexConversion() {
+  std::array<int, 9 * 9> cache;
+
+  int strIdx = 0;
+  int boardIdx = 0;
+  for (int bigRow = 0; bigRow < 3; bigRow++) {
+    for (int bigCol = 0; bigCol < 3; bigCol++) {
+      for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+          cache[boardIdx++] = strIdx++;
+        }
+        boardIdx += 6; // Skip to the next row in the big grid
+      }
+      boardIdx -= 24; // Move back to the start of the next big cell
+    }
+    boardIdx += 18; // Skip to the next big row
+  }
+
+  return cache;
+}
+
+const std::array<int, 9 * 9> s_boardIndexConversion = calcBoardIndexConversion();
 
 std::ostream& operator<<(std::ostream& os, const Piece& piece) {
   switch (piece) {
@@ -78,35 +104,24 @@ Board::Board(std::string boardStr, const Move& lastMove)
   int oCount = std::count(boardStr.begin(), boardStr.end(), 'o');
 
   // check if the board is valid
-  if (xCount < oCount || xCount > oCount + 1) {
+  if (xCount < oCount || xCount > oCount + 1 || boardStr.size() != 9 * 9) {
     SPDLOG_CRITICAL("Invalid board string");
   }
 
-  // initialize the board
-  // probably a clearer way of doing this
-  // but it works for now
-  int strIdx = 0;
-  int boardIdx = 0;
-  for (int bigRow = 0; bigRow < 3; bigRow++) {
-    for (int bigCol = 0; bigCol < 3; bigCol++) {
-      for (int row = 0; row < 3; row++) {
-        for (int col = 0; col < 3; col++) {
-          char c = boardStr[strIdx++];
-          Piece piece;
-          if (c == 'x') {
-            piece = Piece::X;
-          } else if (c == 'o') {
-            piece = Piece::O;
-          } else {
-            piece = Piece::Empty;
-          }
-          m_board[boardIdx++] = piece;
-        }
-        boardIdx += 6; // Skip to the next row in the big grid
-      }
-      boardIdx -= 24; // Move back to the start of the next big cell
+  for (int i = 0; i < 9 * 9; i++) {
+    char c = boardStr[i];
+    Piece piece;
+    if (c == 'x') {
+      piece = Piece::X;
+    } else if (c == 'o') {
+      piece = Piece::O;
+    } else {
+      piece = Piece::Empty;
     }
-    boardIdx += 18; // Skip to the next big row
+    int col = i % 9;
+    int row = i / 9;
+    int idx = s_boardIndexConversion[row * 9 + col];
+    m_board[idx] = piece;
   }
 
   // We have to calculate the status of the big board
@@ -180,9 +195,10 @@ void Board::Play(const Move& move) {
   m_topGameStatus = CalcGameStatus();
 }
 
-static Move ConvertIdxToMove(int idx) { return Move(idx / 9, idx % 9); }
+Move ConvertIdxToMove(int idx) { return Move(idx / 9, idx % 9); }
 
-void Board::PrintPiece(std::ostream& os, int idx) const {
+void Board::PrintPiece(std::ostream& os, int row, int col) const {
+  int idx = s_boardIndexConversion[row * 9 + col];
   const Piece piece = m_board[idx];
   const Move move = ConvertIdxToMove(idx);
   if (m_lastMove && move == *m_lastMove) {
@@ -201,28 +217,18 @@ void Board::PrintPiece(std::ostream& os, int idx) const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Board& game) {
-  for (int j = 0; j < 3; j++) {
-    os << "|--- --- ---|--- --- ---|--- --- ---|\n| ";
-    for (int i = 0; i < 9 * 3; i++) {
-      if (i % 9 < 3) {
-        game.PrintPiece(os, 9 * 3 * j + i);
-      }
+  os << "|--- --- ---|--- --- ---|--- --- ---|\n| ";
+  for (int row = 0; row < 9; row++) {
+    for (int col = 0; col < 9; col++) {
+      game.PrintPiece(os, row, col);
     }
-    os << "\n| ";
-    for (int i = 0; i < 9 * 3; i++) {
-      if (i % 9 >= 3 && i % 9 < 6) {
-        game.PrintPiece(os, 9 * 3 * j + i);
-      }
+    if (row % 3 == 2) {
+      os << "\n|--- --- ---|--- --- ---|--- --- ---| ";
     }
-    os << "\n| ";
-    for (int i = 0; i < 9 * 3; i++) {
-      if (i % 9 >= 6) {
-        game.PrintPiece(os, 9 * 3 * j + i);
-      }
+    if (row != 8) {
+      os << "\n| ";
     }
-    os << "\n";
   }
-  os << "|--- --- ---|--- --- ---|--- --- ---|\n";
   return os;
 }
 

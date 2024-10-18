@@ -8,7 +8,10 @@ public:
     m_rng = std::mt19937(dev());
   }
   virtual void Reset() override {}
-  virtual void Initialize(PlayerSymbol player, const Board&) override { m_player = player; }
+  virtual void Initialize(PlayerSymbol player, const Board& board) override {
+    m_player = player;
+    m_board = board;
+  }
 
   virtual void ReceiveMove(const Move& move) override { m_board.Play(move); }
 
