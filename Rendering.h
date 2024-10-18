@@ -12,7 +12,7 @@ void RenderSmallBoards() {
   glOrtho(0, width, 0, height, -1, 1);
 
   // Draw the grid
-  glColor3f(0.2, 0.2, 0.2);
+  glColor3f(0.2f, 0.2f, 0.2f);
   glBegin(GL_LINES);
   glLineWidth(1);
 
@@ -21,8 +21,8 @@ void RenderSmallBoards() {
     if (i % 3 == 0)
       continue;
 
-    glVertex2f(i, 0);
-    glVertex2f(i, height);
+    glVertex2d(i, 0);
+    glVertex2d(i, height);
   }
 
   // vertical lines
@@ -30,8 +30,8 @@ void RenderSmallBoards() {
     if (j % 3 == 0)
       continue;
 
-    glVertex2f(0, j);
-    glVertex2f(width, j);
+    glVertex2d(0, j);
+    glVertex2d(width, j);
   }
 
   glEnd();
@@ -56,14 +56,14 @@ void RenderBigBoard() {
 
   // horizontal lines
   for (int i = 1; i < width; ++i) {
-    glVertex2f(i, 0);
-    glVertex2f(i, height);
+    glVertex2d(i, 0);
+    glVertex2d(i, height);
   }
 
   // vertical lines
   for (int j = 1; j < height; ++j) {
-    glVertex2f(0, j);
-    glVertex2f(width, j);
+    glVertex2d(0, j);
+    glVertex2d(width, j);
   }
 
   glEnd();

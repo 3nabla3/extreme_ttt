@@ -100,8 +100,8 @@ Board::Board(std::string boardStr, const Move& lastMove)
   boardStr.erase(std::remove_if(boardStr.begin(), boardStr.end(), ::isspace),
                  boardStr.end());
   // count number of X and O
-  int xCount = std::count(boardStr.begin(), boardStr.end(), 'x');
-  int oCount = std::count(boardStr.begin(), boardStr.end(), 'o');
+  uint64_t xCount = std::count(boardStr.begin(), boardStr.end(), 'x');
+  uint64_t oCount = std::count(boardStr.begin(), boardStr.end(), 'o');
 
   // check if the board is valid
   if (xCount < oCount || xCount > oCount + 1 || boardStr.size() != 9 * 9) {

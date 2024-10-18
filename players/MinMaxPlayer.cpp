@@ -74,8 +74,8 @@ Score MinMaxPlayer::Negamax(const Board& board, int depth, Score alpha, Score be
   // });
 
   Score bestValue = std::numeric_limits<Score>::min();
-  for (const auto& [_move, board] : boards) {
-    Score value = -Negamax(board, depth - 1, -beta, -alpha, -weight);
+  for (const auto& [_move, child] : boards) {
+    Score value = -Negamax(child, depth - 1, -beta, -alpha, -weight);
     bestValue = std::max(bestValue, value);
     alpha = std::max(alpha, value);
     if (alpha >= beta) {
