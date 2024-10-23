@@ -3,11 +3,6 @@
 #include "players/MinMaxPlayer.h"
 #include "Rendering.h"
 
-static void KeyCallbackWrapper(GLFWwindow* window, int key, int scancode, int action, int mods) {
-  Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
-  game->KeyCallback(window, key, scancode, action, mods);
-}
-
 void Game::KeyCallback(GLFWwindow*, int key, int, int action, int) {
   if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
     isPaused = !isPaused;
@@ -25,7 +20,7 @@ void Game::InitGLFW() {
   }
 
   // TODO: allow resizing later on
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   m_window = glfwCreateWindow(
       m_windowWidth, m_windowHeight, "TicTacToe", nullptr, nullptr);
 
@@ -35,8 +30,23 @@ void Game::InitGLFW() {
     throw std::runtime_error("Failed to create GLFW window");
   }
 
+  // Associate this window with the game class
+  // to use in callbacks
   glfwSetWindowUserPointer(m_window, this);
-  glfwSetKeyCallback(m_window, KeyCallbackWrapper);
+
+  glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+    Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
+    game->KeyCallback(window, key, scancode, action, mods);
+  });
+  glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
+    SPDLOG_DEBUG("Window resized to {}x{}", width, height);
+    Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
+
+    game->m_windowWidth = width;
+    game->m_windowHeight = height;
+    game->m_viewportNeedsUpdate = true;
+  });
+
 
   glfwSwapInterval(1); // Enable vsync
   SPDLOG_TRACE("GLFW initialized");
@@ -122,6 +132,11 @@ void Game::RenderLoop() {
   SetBackgroundColor();
   while (!glfwWindowShouldClose(m_window)) {
     glClear(GL_COLOR_BUFFER_BIT);
+    // on resize events
+    if (m_viewportNeedsUpdate) {
+      glViewport(0, 0, m_windowWidth, m_windowHeight);
+      m_viewportNeedsUpdate = false;
+    }
 
     RenderSmallBoards();
     RenderBigBoard();

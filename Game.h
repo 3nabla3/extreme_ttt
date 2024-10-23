@@ -38,8 +38,9 @@ private:
 
   std::atomic<bool> gameShouldClose = false;
 
-  const int m_windowWidth = 640;
-  const int m_windowHeight = 480;
+  int m_windowWidth = 640;
+  int m_windowHeight = 480;
+  std::atomic<bool> m_viewportNeedsUpdate{false};
 
   const std::array<float, 3> m_BackgroundColor = {0.0f, 0.1f, 0.1f};
 };

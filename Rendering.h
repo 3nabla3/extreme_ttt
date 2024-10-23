@@ -13,8 +13,8 @@ void RenderSmallBoards() {
 
   // Draw the grid
   glColor3f(0.2f, 0.2f, 0.2f);
+  glLineWidth(1.f);
   glBegin(GL_LINES);
-  glLineWidth(1);
 
   // horizontal lines
   for (int i = 1; i < width; ++i) {
@@ -51,8 +51,8 @@ void RenderBigBoard() {
 
   // Draw the grid
   glColor3f(1, 1, 1);
+  glLineWidth(2.f);
   glBegin(GL_LINES);
-  glLineWidth(2);
 
   // horizontal lines
   for (int i = 1; i < width; ++i) {
