@@ -23,6 +23,11 @@ list(FILTER CPP_FILES EXCLUDE REGEX "external/")
 message("CPP_FILES: ${CPP_FILES}")
 
 add_executable(extreme_ttt ${CPP_FILES})
+# set the debug level depending on the build type
+target_compile_definitions(extreme_ttt PRIVATE
+    $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>
+    $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>
+)
 if(MSVC)
   target_compile_options(extreme_ttt PRIVATE /W4 /WX)
   target_link_libraries(extreme_ttt glfw opengl32)
