@@ -181,6 +181,16 @@ bool Board::IsMoveLegal(const Move& move) const {
   return true;
 }
 
+std::vector<Move> Board::GetLegalMoves() const {
+  std::vector<Move> moves;
+  for (int i = 0; i < 9 * 9; i++) {
+    Move move = ConvertIdxToMove(i);
+    if (IsMoveLegal(move))
+      moves.push_back(move);
+  }
+  return moves;
+}
+
 void Board::Play(const Move& move) {
   if (!IsMoveLegal(move)) {
     SPDLOG_CRITICAL("Invalid move {}", move);

@@ -55,8 +55,12 @@ void Game::InitGLFW() {
     Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
     double rx = x / game->m_windowWidth;
     double ry = y / game->m_windowHeight;
-    game->m_playerX->OnMouseButtonEvent(rx, ry);
-    game->m_playerO->OnMouseButtonEvent(rx, ry);
+
+    // only propagate the event to the correct player
+    if (game->m_board.GetCurrentPlayer() == PlayerSymbol::X)
+      game->m_playerX->OnMouseButtonEvent(rx, ry);
+    else
+      game->m_playerO->OnMouseButtonEvent(rx, ry);
   });
 
   glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
@@ -165,6 +169,9 @@ void Game::RenderLoop() {
     RenderSmallPieces();
     RenderBigPieces();
 
+    if (!m_board.IsGameOver())
+      RenderLegalMoves();
+
     glfwSwapBuffers(m_window);
   }
 
@@ -230,6 +237,21 @@ void Game::RenderBigPieces() {
       }
     }
   }
+}
+
+void Game::RenderLegalMoves() {
+  std::vector<Move> moves = m_board.GetLegalMoves();
+  // make a vector of unique boardPositions from the moves vector
+  std::vector<int> bps;
+  for (const Move& move : moves)
+    if (std::find(bps.begin(), bps.end(), move.m_boardPosition) == bps.end())
+      bps.push_back(move.m_boardPosition);
+
+  glLoadIdentity();
+  int boardSize = 9;
+  glOrtho(0, boardSize, 0, boardSize, -1, 1);
+  for (int boardPosition : bps)
+    RenderBoardBorder(boardPosition);
 }
 
 GameStatus Game::GameLoop() {

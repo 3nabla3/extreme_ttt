@@ -45,6 +45,7 @@ public:
 
   friend bool operator==(const Board& lhs, const Board& rhs);
   bool IsMoveLegal(const Move& move) const;
+  std::vector<Move> GetLegalMoves() const;
   void Play(const Move& move);
   PlayerSymbol GetCurrentPlayer() const { return m_currentPlayer; }
   PlayerSymbol GetOtherPlayer() const {

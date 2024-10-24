@@ -23,6 +23,7 @@ private:
   void RenderSinglePiece(int row, int col);
   void RenderSmallPieces();
   void RenderBigPieces();
+  void RenderLegalMoves();
 
   Board m_board;
   std::unique_ptr<Player> m_playerX;

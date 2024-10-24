@@ -109,3 +109,26 @@ void RenderO(int row, int col, const GLfloat* color, float thickness = 3.f) {
   }
   glEnd();
 }
+
+/**
+ * Render a yellow border around the given board
+ * to indicate the player can play in this board
+ *
+ * @param boardPosition the position of the board
+ */
+void RenderBoardBorder(int boardPosition) {
+  const GLfloat yellow[3] = {1.f, 1.f, 0.f};
+  glColor3fv(yellow);
+  glLineWidth(2.f);
+
+  const int boardSize = 3;
+  const int startingRow = 9 - boardPosition / boardSize * boardSize;
+  const int startingCol = boardPosition % boardSize * boardSize;
+
+  glBegin(GL_LINE_LOOP);
+  glVertex2f(startingCol, startingRow);
+  glVertex2f(startingCol + boardSize, startingRow);
+  glVertex2f(startingCol + boardSize, startingRow - boardSize);
+  glVertex2f(startingCol, startingRow - boardSize);
+  glEnd();
+}
