@@ -15,8 +15,10 @@ void Game::InitGLFW() {
   SPDLOG_TRACE("Initializing GLFW");
 
   if (!glfwInit()) {
-    SPDLOG_CRITICAL("Failed to initialize GLFW");
-    throw std::runtime_error("Failed to initialize GLFW");
+    const char* error;
+    glfwGetError(&error);
+    SPDLOG_CRITICAL("Failed to initialize GLFW: {}", error);
+    abort();
   }
 
   // TODO: allow resizing later on
@@ -25,9 +27,11 @@ void Game::InitGLFW() {
       m_windowWidth, m_windowHeight, "TicTacToe", nullptr, nullptr);
 
   if (!m_window) {
+    const char* error;
+    glfwGetError(&error);
+    SPDLOG_CRITICAL("Failed to create GLFW window: {}", error);
     glfwTerminate();
-    SPDLOG_CRITICAL("Failed to create GLFW window");
-    throw std::runtime_error("Failed to create GLFW window");
+    abort();
   }
 
   // Associate this window with the game class
