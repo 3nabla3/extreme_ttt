@@ -66,13 +66,13 @@ public:
 
 private:
   // Get the game status for the entire board
-  GameStatus CalcGameStatus() const;
+  GameStatus CalcGameStatus(PlayerSymbol currentPlayer) const;
   // Get the game status for a specific sub board
-  GameStatus CalcGameStatus(int boardPosition) const;
+  GameStatus CalcGameStatus(PlayerSymbol currentPlayer, int boardPosition) const;
+  GameStatus GetGameStatus_IMPL(PlayerSymbol currentPlayer, const Piece* board) const;
 
   bool IsBoardFull(int boardPosition) const;
   void PrintPiece(std::ostream& os, int row, int col) const;
-  GameStatus GetGameStatus_IMPL(const Piece* board) const;
 
   std::array<Piece, 9 * 9> m_board = {Piece::Empty};
   std::array<GameStatus, 9> m_bigBoard = {GameStatus::InProgress};

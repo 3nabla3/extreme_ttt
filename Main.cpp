@@ -17,15 +17,15 @@ int main(void) {
   )");
 
   std::string initiailBoardStr = R"(
-.	.	.	x	x	x	.	o	.
-.	o	.	.	o	.	.	o	.
-.	o	.	.	x	x	.	.	.
-.	.	.	x	o	.	.	o	.
-x	.	.	.	x	x	.	o	.
-.	.	.	.	x	x	.	o	.
-.	.	o	.	.	.	.	o	.
-.	.	.	o	.	x	.	o	.
-.	x	.	.	x	x	.	o	.
+x	x	o	x	o	o	o	o	x
+x	x	o	o	x	x	o	o	.
+o	o	x	x	x	o	o	.	.
+o	x	.	.	o	o	.	x	x
+.	o	.	o	x	o	o	x	x
+.	x	o	o	x	o	.	x	o
+x	x	x	o	.	.	x	x	x
+x	.	.	o	x	o	x	x	.
+o	x	.	o	o	x	o	.	o
   )";
   Board initialBoard(initiailBoardStr, Move(3, 3));
 
@@ -44,7 +44,7 @@ x	.	.	.	x	x	.	o	.
 
   // Game game(initialBoard);
   Game game;
-  game.RegisterPlayer(std::make_unique<MinMaxPlayer>());
+  game.RegisterPlayer(std::make_unique<HumanPlayer>());
   game.RegisterPlayer(std::make_unique<MinMaxPlayer>());
 
   game.RunGUI();

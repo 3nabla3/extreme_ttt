@@ -20,6 +20,9 @@ Move MinMaxPlayer::GetMove() {
 
   SPDLOG_DEBUG("Analyzing {} possible moves (higher is better)", boards.size());
   for (const auto& [move, board] : boards) {
+    if (m_isTerminated)
+      break;
+
     SPDLOG_DEBUG("Analyzing move {}", move);
     Score value = -Negamax(board, m_depth, alpha, beta, weight);
     SPDLOG_DEBUG("\t --> score {} (best value: {})", value, bestValue);

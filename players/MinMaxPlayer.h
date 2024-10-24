@@ -25,7 +25,8 @@ private:
   std::vector<std::pair<Move, Board>> GetChildrenBoards(const Board& board);
   PlayerSymbol m_player;
   Board m_mainBoard;
-  uint8_t m_depth = 1;
+  uint8_t m_depth = 3;
+  std::atomic<bool> m_isTerminated = false;
 
   // static variables for caching and bookkeeping
   static std::unordered_map<Board, Score> s_scoreMap;

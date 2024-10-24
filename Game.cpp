@@ -195,9 +195,9 @@ float Game::GetColorIntensity(Move move) {
   if (move == m_board.GetLastMove())
     return 1.f;
   else if (bigBoardStatus != GameStatus::InProgress)
-    return 0.3f;
+    return 0.2f;
   else
-    return 0.7f;
+    return 0.5f;
 }
 
 void Game::RenderSinglePiece(int row, int col) {
@@ -273,8 +273,8 @@ GameStatus Game::GameLoop() {
   SPDLOG_INFO("Running the game");
 
   while (!m_board.IsGameOver() && !m_gameShouldClose) {
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(100ms);
+    // using namespace std::chrono_literals;
+    // std::this_thread::sleep_for(100ms);
 
     Player* currentPlayer;
     Player* otherPlayer;

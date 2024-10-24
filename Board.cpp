@@ -124,25 +124,23 @@ Board::Board(std::string boardStr, const Move& lastMove)
     m_board[idx] = piece;
   }
 
-  // We have to calculate the status of the big board
-  // twice because it will only
-  // check for the last player that played
-  // (this is a necessary optimization)
-  m_currentPlayer = PlayerSymbol::X;
+  // Now we need to update the status of the big board
+  // by going through each of the small boards and
+  // checking if the game is in progress or if one
+  // of the players has won
   for (int i = 0; i < 9; i++) {
-    m_bigBoard[i] = CalcGameStatus(i);
-  }
-  m_topGameStatus = CalcGameStatus();
-
-  m_currentPlayer = PlayerSymbol::O;
-  for (int i = 0; i < 9; i++) {
-    // if we dont find a win for O we dont want
-    // to overwrite the win for X
-    if (m_bigBoard[i] != GameStatus::InProgress)
+    m_bigBoard[i] = CalcGameStatus(PlayerSymbol::X, i);
+    if (m_bigBoard[i] == GameStatus::XWins)
       continue;
-    m_bigBoard[i] = CalcGameStatus(i);
+
+    m_bigBoard[i] = CalcGameStatus(PlayerSymbol::O, i);
   }
-  m_topGameStatus = CalcGameStatus();
+
+  // and then we need to update the status of the
+  // entire game
+  m_topGameStatus = CalcGameStatus(PlayerSymbol::X);
+  if (m_topGameStatus != GameStatus::XWins)
+    m_topGameStatus = CalcGameStatus(PlayerSymbol::O);
 
   // now we can set the actual current player
   m_currentPlayer = xCount == oCount ? PlayerSymbol::X : PlayerSymbol::O;
@@ -197,12 +195,14 @@ void Board::Play(const Move& move) {
   }
   int index = move.m_boardPosition * 9 + move.m_cellPosition;
   m_board[index] = player2piece(m_currentPlayer);
-  m_currentPlayer = GetOtherPlayer();
   m_lastMove = move;
 
   // update the status of the big board
-  m_bigBoard[move.m_boardPosition] = CalcGameStatus(move.m_boardPosition);
-  m_topGameStatus = CalcGameStatus();
+  m_bigBoard[move.m_boardPosition] = CalcGameStatus(m_currentPlayer, move.m_boardPosition);
+  m_topGameStatus = CalcGameStatus(m_currentPlayer);
+
+  // switch current player
+  m_currentPlayer = GetOtherPlayer();
 }
 
 Move ConvertIdxToMove(int idx) { return Move(idx / 9, idx % 9); }
@@ -242,7 +242,18 @@ std::ostream& operator<<(std::ostream& os, const Board& game) {
   return os;
 }
 
-GameStatus Board::GetGameStatus_IMPL(const Piece* board) const {
+GameStatus Board::GetGameStatus_IMPL(PlayerSymbol currentPlayer, const Piece* board) const {
+  // only the last player that played in the board can win
+  Piece piece = player2piece(currentPlayer);
+  for (const auto [idx0, idx1, idx2] : s_indices) {
+    if (board[idx0] == piece &&
+        board[idx1] == piece &&
+        board[idx2] == piece) {
+      return currentPlayer == PlayerSymbol::X ? GameStatus::XWins
+                                              : GameStatus::OWins;
+    }
+  }
+
   // check if the board is full
   if (std::all_of(board, board + 9, [](Piece piece) {
         return piece != Piece::Empty;
@@ -250,33 +261,21 @@ GameStatus Board::GetGameStatus_IMPL(const Piece* board) const {
     return GameStatus::Draw;
   }
 
-  // only the last player that played in the board can win
-  Piece piece = player2piece(GetOtherPlayer());
-  for (int i = 0; i < 8; i++) {
-    const auto& indices = s_indices[i];
-    if (board[indices[0]] == piece && board[indices[1]] == piece &&
-        board[indices[2]] == piece) {
-      return GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
-                                                 : GameStatus::OWins;
-    }
-  }
-
   return GameStatus::InProgress;
 }
 
-GameStatus Board::CalcGameStatus(int boardPosition) const {
-  return GetGameStatus_IMPL(m_board.data() + boardPosition * 9);
+GameStatus Board::CalcGameStatus(PlayerSymbol currentPlayer, int boardPosition) const {
+  return GetGameStatus_IMPL(currentPlayer, m_board.data() + boardPosition * 9);
 }
 
-GameStatus Board::CalcGameStatus() const {
+GameStatus Board::CalcGameStatus(PlayerSymbol player) const {
   // only the last player that played on the board can win
-  GameStatus status = GetOtherPlayer() == PlayerSymbol::X ? GameStatus::XWins
-                                                          : GameStatus::OWins;
-  for (int i = 0; i < 8; i++) {
-    const auto& indices = s_indices[i];
-    if (m_bigBoard[indices[0]] == status &&
-        m_bigBoard[indices[1]] == status &&
-        m_bigBoard[indices[2]] == status) {
+  GameStatus status = player == PlayerSymbol::X ? GameStatus::XWins
+                                                : GameStatus::OWins;
+  for (const auto& [idx0, idx1, idx2] : s_indices) {
+    if (m_bigBoard[idx0] == status &&
+        m_bigBoard[idx1] == status &&
+        m_bigBoard[idx2] == status) {
       return status;
     }
   }
