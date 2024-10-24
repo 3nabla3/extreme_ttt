@@ -3,11 +3,11 @@
 #include "players/MinMaxPlayer.h"
 #include "Rendering.h"
 
-void Game::KeyCallback(GLFWwindow*, int key, int, int action, int) {
+void Game::OnKeyPress(GLFWwindow*, int key, int, int action, int) {
   if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-    isPaused = !isPaused;
-    pauseCondVar.notify_one();
-    SPDLOG_INFO("Game is {}", isPaused ? "paused" : "running");
+    m_isPaused = !m_isPaused;
+    m_pauseCondVar.notify_one();
+    SPDLOG_INFO("Game is {}", m_isPaused ? "paused" : "running");
   }
 }
 
@@ -35,18 +35,38 @@ void Game::InitGLFW() {
   glfwSetWindowUserPointer(m_window, this);
 
   glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+    SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, glfwGetKeyName(key, scancode));
     Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
-    game->KeyCallback(window, key, scancode, action, mods);
+    game->OnKeyPress(window, key, scancode, action, mods);
   });
+
+  glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
+    // for now we only want to listen to left clicks
+    (void)mods;
+    if (action == GLFW_RELEASE)
+      return;
+    if (button != GLFW_MOUSE_BUTTON_LEFT)
+      return;
+
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+
+    SPDLOG_DEBUG("MouseButtonEvent at ({}, {})", x, y);
+    Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
+    double rx = x / game->m_windowWidth;
+    double ry = y / game->m_windowHeight;
+    game->m_playerX->OnMouseButtonEvent(rx, ry);
+    game->m_playerO->OnMouseButtonEvent(rx, ry);
+  });
+
   glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
-    SPDLOG_DEBUG("Window resized to {}x{}", width, height);
+    SPDLOG_DEBUG("WindowResizeEvent to {}x{}", width, height);
     Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
 
     game->m_windowWidth = width;
     game->m_windowHeight = height;
     game->m_viewportNeedsUpdate = true;
   });
-
 
   glfwSwapInterval(1); // Enable vsync
   SPDLOG_TRACE("GLFW initialized");
@@ -83,9 +103,11 @@ GameStatus Game::RunGUI() {
   while (!glfwWindowShouldClose(m_window)) {
     glfwWaitEvents();
   }
-  gameShouldClose = true;
-  pauseCondVar.notify_one();
+  m_gameShouldClose = true;
+  m_playerX->Terminate();
+  m_playerO->Terminate();
 
+  m_pauseCondVar.notify_one();
   renderThread.join();
   SPDLOG_TRACE("Render thread joined");
   gameThread.join();
@@ -213,29 +235,42 @@ void Game::RenderBigPieces() {
 GameStatus Game::GameLoop() {
   SPDLOG_INFO("Running the game");
 
-  while (!m_board.IsGameOver() && !gameShouldClose) {
+  while (!m_board.IsGameOver() && !m_gameShouldClose) {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(100ms);
 
-    Move move;
-    PlayerSymbol player = m_board.GetCurrentPlayer();
-    SPDLOG_INFO("Waiting for a move");
-    if (player == PlayerSymbol::X) {
-      move = m_playerX->GetMove();
-      m_playerO->ReceiveMove(move);
+    Player* currentPlayer;
+    Player* otherPlayer;
+    PlayerSymbol ps = m_board.GetCurrentPlayer();
+    if (ps == PlayerSymbol::X) {
+      currentPlayer = m_playerX.get();
+      otherPlayer = m_playerO.get();
     } else {
-      move = m_playerO->GetMove();
-      m_playerX->ReceiveMove(move);
+      currentPlayer = m_playerO.get();
+      otherPlayer = m_playerX.get();
     }
 
-    SPDLOG_INFO("{} played {}", player, move);
-    m_board.Play(move);
-    SPDLOG_DEBUG("New hash {}", std::hash<Board>{}(m_board));
+    SPDLOG_INFO("Waiting for a move");
+    Move move;
+    bool played = false;
+    move = currentPlayer->GetMove();
+    if (m_board.IsMoveLegal(move)) {
+      otherPlayer->ReceiveMove(move);
+      played = true;
+    } else if (!m_gameShouldClose) {
+      SPDLOG_ERROR("Illegal move");
+    }
 
-    // std::cout << m_board << '\n';
+    if (played) {
+      SPDLOG_INFO("{} played {}", ps, move);
+      m_board.Play(move);
+      SPDLOG_DEBUG("New hash {}", std::hash<Board>{}(m_board));
+    }
 
-    std::unique_lock<std::mutex> pauseLock(pauseMutex);
-    pauseCondVar.wait(pauseLock, [this] { return !isPaused || gameShouldClose; });
+    std::unique_lock<std::mutex> pauseLock(m_PauseMutex);
+    m_pauseCondVar.wait(pauseLock, [this] {
+      return !m_isPaused || m_gameShouldClose;
+    });
   }
 
   SPDLOG_INFO("Game is over with status {}", m_board.GetTopGameStatus());

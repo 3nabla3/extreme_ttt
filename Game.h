@@ -14,7 +14,7 @@ public:
   void RenderLoop();
   GameStatus GameLoop();
 
-  void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+  void OnKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 private:
   void SetBackgroundColor();
@@ -32,11 +32,11 @@ private:
   // because not a complete type
   GLFWwindow* m_window = nullptr;
 
-  std::mutex pauseMutex;
-  std::condition_variable pauseCondVar;
-  std::atomic<bool> isPaused = false;
+  std::mutex m_PauseMutex;
+  std::condition_variable m_pauseCondVar;
+  std::atomic<bool> m_isPaused = false;
 
-  std::atomic<bool> gameShouldClose = false;
+  std::atomic<bool> m_gameShouldClose = false;
 
   int m_windowWidth = 640;
   int m_windowHeight = 480;
