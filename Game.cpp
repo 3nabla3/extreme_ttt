@@ -21,7 +21,10 @@ void Game::InitGLFW() {
     abort();
   }
 
-  // TODO: allow resizing later on
+  SPDLOG_TRACE("GLFW initialized");
+}
+
+void Game::CreateGLFWWindow() {
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   m_window = glfwCreateWindow(
       m_windowWidth, m_windowHeight, "TicTacToe", nullptr, nullptr);
@@ -37,9 +40,16 @@ void Game::InitGLFW() {
   // Associate this window with the game class
   // to use in callbacks
   glfwSetWindowUserPointer(m_window, this);
+  glfwSwapInterval(1); // Enable vsync
 
+  SPDLOG_TRACE("GLFW window created");
+}
+
+void Game::InitCallbacks() {
   glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-    SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, glfwGetKeyName(key, scancode));
+    const char* keyName = glfwGetKeyName(key, scancode);
+    // keyname can be null for modifier values
+    SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, keyName ? keyName : "");
     Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
     game->OnKeyPress(window, key, scancode, action, mods);
   });
@@ -76,8 +86,7 @@ void Game::InitGLFW() {
     game->m_viewportNeedsUpdate = true;
   });
 
-  glfwSwapInterval(1); // Enable vsync
-  SPDLOG_TRACE("GLFW initialized");
+  SPDLOG_TRACE("Callbacks initialized");
 }
 
 Game::~Game() {
@@ -103,8 +112,6 @@ void Game::RegisterPlayer(std::unique_ptr<Player> player) {
 
 GameStatus Game::RunGUI() {
   SPDLOG_TRACE("Running GUI");
-  if (!m_window)
-    InitGLFW();
 
   std::thread renderThread(&Game::RenderLoop, this);
   std::thread gameThread(&Game::GameLoop, this);
@@ -222,16 +229,20 @@ void Game::RenderSmallPieces() {
 }
 
 void Game::RenderBigPieces() {
-  const int kBoardSize = 3;
+  const int boardSize = 3;
   // we want the big pieces to be thicker than the small
   const float thickness = 7.f;
 
+  // add an offset to the big pieces so the big X does
+  // not overlap with the small X in the center
+  const float xOffset = -0.02f;
+  const float yOffset = -0.07f;
   glLoadIdentity();
-  glOrtho(0, kBoardSize, 0, kBoardSize, -1, 1);
-  for (int row = 0; row < kBoardSize; ++row) {
-    for (int col = 0; col < kBoardSize; ++col) {
-      const GameStatus status = m_board.GetBigBoard()[row * kBoardSize + col];
-      int renderRow = kBoardSize - 1 - row;
+  glOrtho(xOffset, boardSize + xOffset, yOffset, boardSize + yOffset, -1, 1);
+  for (int row = 0; row < boardSize; ++row) {
+    for (int col = 0; col < boardSize; ++col) {
+      const GameStatus status = m_board.GetBigBoard()[row * boardSize + col];
+      int renderRow = boardSize - 1 - row;
       if (status == GameStatus::XWins) {
         GLfloat red[3] = {0.6f, 0.f, 0.f};
         RenderX(renderRow, col, red, thickness);

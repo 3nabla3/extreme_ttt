@@ -3,20 +3,28 @@
 
 class Game {
 public:
-  Game() = default;
-  Game(const Board& board) : m_board(board) {}
+  Game() { Init(); }
+  Game(const Board& board) : m_board(board) { Init(); }
   ~Game();
 
   void RegisterPlayer(std::unique_ptr<Player> player);
-
   GameStatus RunGUI();
+
+private:
+  void OnKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+  void Init() {
+    InitGLFW();
+    CreateGLFWWindow();
+    InitCallbacks();
+  }
   void InitGLFW();
+  void CreateGLFWWindow();
+  void InitCallbacks();
+
   void RenderLoop();
   GameStatus GameLoop();
 
-  void OnKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-private:
   void SetBackgroundColor();
   float GetColorIntensity(Move move);
 
