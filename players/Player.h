@@ -4,7 +4,7 @@
 
 class Player {
 public:
-  virtual ~Player() {};
+  virtual ~Player(){};
 
   /**
    * Called once when the game starts
@@ -52,5 +52,5 @@ public:
    */
   virtual void OnMouseButtonEvent(
       [[maybe_unused]] double x,
-      [[maybe_unused]] double y) {};
+      [[maybe_unused]] double y){};
 };

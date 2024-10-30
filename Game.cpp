@@ -2,7 +2,10 @@
 #include "Game.h"
 #include "Rendering.h"
 
-void Game::OnKeyPress(GLFWwindow*, int key, int, int action, int) {
+void Game::OnKeyPress(GLFWwindow*, int key, int scancode, int action, [[maybe_unused]] int mods) {
+  [[maybe_unused]] const char* keyName = glfwGetKeyName(key, scancode);
+  SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, keyName ? keyName : "");
+
   if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
     m_isPaused = !m_isPaused;
     m_pauseCondVar.notify_one();
@@ -46,11 +49,10 @@ void Game::CreateGLFWWindow() {
 
 void Game::InitCallbacks() {
   glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-    const char* keyName = glfwGetKeyName(key, scancode);
-    // keyname can be null for modifier values
-    SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, keyName ? keyName : "");
-    Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
-    game->OnKeyPress(window, key, scancode, action, mods);
+    if (action == GLFW_PRESS) {
+      Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
+      game->OnKeyPress(window, key, scancode, action, mods);
+    }
   });
 
   glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, [[maybe_unused]] int mods) {
