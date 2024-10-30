@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "Game.h"
-#include "players/MinMaxPlayer.h"
 #include "Rendering.h"
 
 void Game::OnKeyPress(GLFWwindow*, int key, int, int action, int) {

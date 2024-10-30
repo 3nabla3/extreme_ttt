@@ -3,9 +3,9 @@
 
 typedef int32_t Score;
 
-class MinMaxPlayer : public Player {
+class AIPlayer : public Player {
 public:
-  MinMaxPlayer() = default;
+  AIPlayer() = default;
   virtual void Reset() override {}
   virtual void ReceiveMove(const Move&) override;
   virtual void Initialize(PlayerSymbol player, const Board& board) override {

@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "MinMaxPlayer.h"
+#include "AIPlayer.h"
 
-int MinMaxPlayer::attempted = 0;
-int MinMaxPlayer::found = 0;
-std::unordered_map<Board, Score> MinMaxPlayer::s_scoreMap;
+int AIPlayer::attempted = 0;
+int AIPlayer::found = 0;
+std::unordered_map<Board, Score> AIPlayer::s_scoreMap;
 
-Move MinMaxPlayer::GetMove() {
+Move AIPlayer::GetMove() {
   std::vector<std::pair<Move, Board>> boards = GetChildrenBoards(m_mainBoard);
   Score bestValue = std::numeric_limits<Score>::min();
   Move bestMove;
@@ -38,11 +38,11 @@ Move MinMaxPlayer::GetMove() {
   return bestMove;
 }
 
-void MinMaxPlayer::ReceiveMove(const Move& move) {
+void AIPlayer::ReceiveMove(const Move& move) {
   m_mainBoard.Play(move);
 }
 
-std::vector<std::pair<Move, Board>> MinMaxPlayer::GetChildrenBoards(const Board& board) {
+std::vector<std::pair<Move, Board>> AIPlayer::GetChildrenBoards(const Board& board) {
   // TODO: can this be optimized
   std::vector<std::pair<Move, Board>> boards;
 
@@ -60,7 +60,7 @@ std::vector<std::pair<Move, Board>> MinMaxPlayer::GetChildrenBoards(const Board&
   return boards;
 }
 
-Score MinMaxPlayer::Negamax(const Board& board, int depth, Score alpha, Score beta, int weight) {
+Score AIPlayer::Negamax(const Board& board, int depth, Score alpha, Score beta, int weight) {
   // this function returns the score from the perspective
   // of the player who's turn it is to play.
   // The higher the score, the better it is for the player
@@ -90,7 +90,7 @@ Score MinMaxPlayer::Negamax(const Board& board, int depth, Score alpha, Score be
 
 // https://en.wikipedia.org/wiki/Negamax
 
-Score MinMaxPlayer::StaticAnalysis(const Board& board) {
+Score AIPlayer::StaticAnalysis(const Board& board) {
   // A simple memoization technique to avoid recalculating the same board
   attempted++;
   const auto& it = s_scoreMap.find(board);
@@ -104,7 +104,7 @@ Score MinMaxPlayer::StaticAnalysis(const Board& board) {
   return score;
 }
 
-Score MinMaxPlayer::CalcStaticAnalysis(const Board& board) {
+Score AIPlayer::CalcStaticAnalysis(const Board& board) {
   // TODO: this function should return the score of the board
   // from the perspective of player X. Meaning that the higher
   // the score, the better it is for player X

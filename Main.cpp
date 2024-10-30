@@ -3,7 +3,7 @@
 #include "Board.h"
 #include "Game.h"
 #include "players/HumanPlayer.h"
-#include "players/MinMaxPlayer.h"
+#include "players/AIPlayer.h"
 #include "players/RandomPlayer.h"
 
 int main(void) {
@@ -45,12 +45,12 @@ o	x	.	o	o	x	o	.	o
   // Game game(initialBoard);
   Game game;
   game.RegisterPlayer(std::make_unique<HumanPlayer>());
-  game.RegisterPlayer(std::make_unique<MinMaxPlayer>());
+  game.RegisterPlayer(std::make_unique<AIPlayer>());
 
   game.RunGUI();
 
-  SPDLOG_INFO("Cache hit ratio: {}", MinMaxPlayer::HitRatio());
-  std::pair<int, int> stats = MinMaxPlayer::HitStats();
+  SPDLOG_INFO("Cache hit ratio: {}", AIPlayer::HitRatio());
+  std::pair<int, int> stats = AIPlayer::HitStats();
   SPDLOG_INFO("\t\tAttempted: {}, Found: {}", stats.first, stats.second);
 
   return 0;
