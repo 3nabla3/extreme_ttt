@@ -18,7 +18,7 @@ To compile and run this project you need a c++ compiler, and cmake
 3. Install dependencies
 
 ```
-sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libmesa-dev
+sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev mesa-common-dev
 ```
 
 ### Installation

@@ -126,9 +126,9 @@ void RenderBoardBorder(int boardPosition) {
   const int startingCol = boardPosition % boardSize * boardSize;
 
   glBegin(GL_LINE_LOOP);
-  glVertex2f(startingCol, startingRow);
-  glVertex2f(startingCol + boardSize, startingRow);
-  glVertex2f(startingCol + boardSize, startingRow - boardSize);
-  glVertex2f(startingCol, startingRow - boardSize);
+  glVertex2d(startingCol, startingRow);
+  glVertex2d(startingCol + boardSize, startingRow);
+  glVertex2d(startingCol + boardSize, startingRow - boardSize);
+  glVertex2d(startingCol, startingRow - boardSize);
   glEnd();
 }
