@@ -3,19 +3,12 @@
 
 class HumanPlayer : public Player {
 public:
-  virtual void Reset() override {}
-  virtual void ReceiveMove(const Move&) override {}
   virtual void Initialize(PlayerSymbol player, const Board&) override {
     m_player = player;
   }
 
-  virtual void OnMouseButtonEvent(double x, double y) override {
-    int row = static_cast<int>(y * 9);
-    int col = static_cast<int>(x * 9);
-    int idx = s_boardIndexConversion[row * 9 + col];
-    Move move = ConvertIdxToMove(idx);
-    std::unique_lock<std::mutex> lock(m_mutex);
-    m_chosenMove = move;
+  virtual void Terminate() override {
+    m_isTerminated = true;
     m_cv.notify_all();
   }
 
@@ -39,8 +32,16 @@ public:
     return std::exchange(m_chosenMove, std::nullopt).value();
   }
 
-  virtual void Terminate() override {
-    m_isTerminated = true;
+  virtual void ReceiveMove(const Move&) override {}
+  virtual void Reset() override {}
+
+  virtual void OnMouseButtonEvent(double x, double y) override {
+    int row = static_cast<int>(y * 9);
+    int col = static_cast<int>(x * 9);
+    int idx = s_boardIndexConversion[row * 9 + col];
+    Move move = ConvertIdxToMove(idx);
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_chosenMove = move;
     m_cv.notify_all();
   }
 

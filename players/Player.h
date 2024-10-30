@@ -19,7 +19,7 @@ public:
    * either by a game ending or the user
    * closing the game window
    */
-  virtual void Terminate() {};
+  virtual void Terminate() = 0;
 
   /**
    * Requests the next move,
@@ -32,11 +32,6 @@ public:
   virtual Move GetMove() = 0;
 
   /**
-   * Resets the player for the next game
-   */
-  virtual void Reset() = 0;
-
-  /**
    * Called when the other player makes a move
    * so this player can update its state
    *
@@ -45,14 +40,17 @@ public:
   virtual void ReceiveMove(const Move& move) = 0;
 
   /**
+   * Resets the player for the next game
+   */
+  virtual void Reset() = 0;
+
+  /**
    * Called when the user clicks on the screen
    *
    * @param x the x ratio of the click (0-1)
    * @param y the y ratio of the click (0-1)
    */
-  virtual void OnMouseButtonEvent(double x, double y) {
-    // avoid unused parameters warning
-    (void)x;
-    (void)y;
-  }
+  virtual void OnMouseButtonEvent(
+      [[maybe_unused]] double x,
+      [[maybe_unused]] double y) {};
 };

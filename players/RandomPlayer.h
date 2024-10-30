@@ -7,14 +7,12 @@ public:
     std::random_device dev;
     m_rng = std::mt19937(dev());
   }
-  virtual void Reset() override {}
+
   virtual void Initialize(PlayerSymbol player, const Board& board) override {
     m_player = player;
     m_board = board;
   }
   virtual void Terminate() override { m_isTerminated = true; }
-
-  virtual void ReceiveMove(const Move& move) override { m_board.Play(move); }
 
   virtual Move GetMove() override {
     std::uniform_int_distribution<std::mt19937::result_type> dist(0, 8);
@@ -31,6 +29,9 @@ public:
     // it will be ignored anyways
     return Move(0, 0);
   }
+
+  virtual void ReceiveMove(const Move& move) override { m_board.Play(move); }
+  virtual void Reset() override {}
 
 private:
   PlayerSymbol m_player;

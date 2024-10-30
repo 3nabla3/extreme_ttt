@@ -6,21 +6,23 @@ typedef int32_t Score;
 class AIPlayer : public Player {
 public:
   AIPlayer() = default;
-  virtual void Reset() override {}
-  virtual void ReceiveMove(const Move&) override;
   virtual void Initialize(PlayerSymbol player, const Board& board) override {
     SPDLOG_TRACE("Initializing MinMaxPlayer with player: {}", player);
     m_player = player;
     m_mainBoard = board;
   }
+  virtual void Terminate() override { m_isTerminated = true; }
 
   virtual Move GetMove() override;
-  Score Negamax(const Board& board, int depth, Score alpha, Score beta, int weigth);
-  Score StaticAnalysis(const Board& board);
+  virtual void ReceiveMove(const Move& move) override;
+  virtual void Reset() override {}
+
   static float HitRatio() { return ((found * 1.0f) / (attempted * 1.0f)); }
   static std::pair<int, int> HitStats() { return {attempted, found}; }
 
 private:
+  Score Negamax(const Board& board, int depth, Score alpha, Score beta, int weigth);
+  Score StaticAnalysis(const Board& board);
   Score CalcStaticAnalysis(const Board& board);
   std::vector<std::pair<Move, Board>> GetChildrenBoards(const Board& board);
   PlayerSymbol m_player;

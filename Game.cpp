@@ -53,9 +53,8 @@ void Game::InitCallbacks() {
     game->OnKeyPress(window, key, scancode, action, mods);
   });
 
-  glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
+  glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, [[maybe_unused]] int mods) {
     // for now we only want to listen to left clicks
-    (void)mods;
     if (action == GLFW_RELEASE)
       return;
     if (button != GLFW_MOUSE_BUTTON_LEFT)
