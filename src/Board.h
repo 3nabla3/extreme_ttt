@@ -64,6 +64,7 @@ public:
   inline Piece GetPieceAt(int board, int cell) const { return m_board[board * 9 + cell]; }
   inline Piece GetPieceAtRowCol(int row, int col) const { return m_board[s_boardIndexConversion[row * 9 + col]]; }
 
+  static const std::array<std::array<int, 3>, 8> s_indices;
 private:
   // Get the game status for the entire board
   GameStatus CalcGameStatus(PlayerSymbol currentPlayer) const;
@@ -80,8 +81,6 @@ private:
 
   PlayerSymbol m_currentPlayer = PlayerSymbol::X;
   std::optional<Move> m_lastMove;
-
-  static const std::array<std::array<int, 3>, 8> s_indices;
 };
 
 // make the Board hashable

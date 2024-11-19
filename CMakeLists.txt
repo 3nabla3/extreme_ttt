@@ -6,6 +6,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/d144031940543e15423a25ae5a8a74141044862f.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 # Add submodules
 add_subdirectory(external/spdlog)
 add_subdirectory(external/glfw)
@@ -44,3 +53,19 @@ set(CPACK_PACKAGE_CONTACT "your.email@example.com")
 
 install(TARGETS extreme_ttt RUNTIME DESTINATION bin)
 include(CPack)
+
+enable_testing()
+file(GLOB_RECURSE TEST_FILES tests/*.cpp)
+list(FILTER CPP_FILES EXCLUDE REGEX ".*Main\\.cpp$")
+add_executable(unit_tests ${TEST_FILES} ${CPP_FILES})
+target_link_libraries(unit_tests GTest::gtest_main)
+target_link_libraries(unit_tests spdlog::spdlog)
+target_include_directories(unit_tests PRIVATE src)
+if(MSVC)
+  target_link_libraries(unit_tests glfw opengl32)
+elseif(UNIX)
+  target_link_libraries(unit_tests glfw GL)
+endif()
+
+include(GoogleTest)
+gtest_discover_tests(unit_tests)

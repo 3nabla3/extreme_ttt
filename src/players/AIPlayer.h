@@ -22,8 +22,12 @@ public:
 
 private:
   Score Negamax(const Board& board, int depth, Score alpha, Score beta, int weigth);
+
   Score StaticAnalysis(const Board& board);
   Score CalcStaticAnalysis(const Board& board);
+
+  Score SingleBoardStaticAnalysis(const Piece* board);
+
   std::vector<std::pair<Move, Board>> GetChildrenBoards(const Board& board);
   PlayerSymbol m_player;
   Board m_mainBoard;
@@ -35,3 +39,5 @@ private:
   static int attempted;
   static int found;
 };
+
+Score SingleBoardStaticAnalysis(const Piece* board);
