@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "AIPlayer.h"
 
-int AIPlayer::attempted = 0;
-int AIPlayer::found = 0;
 std::unordered_map<Board, Score> AIPlayer::s_scoreMap;
 
 Move AIPlayer::GetMove() {
@@ -93,8 +91,7 @@ Score AIPlayer::Negamax(const Board& board, int depth, Score alpha, Score beta, 
 /**
  * @brief Calculates the score of the board from the perspective of player X
  *
- * The higher the score, the better it is for player X. This function should be
- * called with a board that is not in a terminal state.
+ * The higher the score, the better it is for player X.
  *
  * @param board The board to evaluate
  * @return The score of the board
@@ -105,10 +102,18 @@ Score AIPlayer::Negamax(const Board& board, int depth, Score alpha, Score beta, 
  * again.
  */
 Score AIPlayer::StaticAnalysis(const Board& board) {
-  attempted++;
+  // base cases
+  if (board.GetTopGameStatus() == GameStatus::XWins)
+    return 100;
+  else if (board.GetTopGameStatus() == GameStatus::OWins)
+    return -100;
+  else if (board.GetTopGameStatus() == GameStatus::Draw)
+    return 0;
+
+  m_attempted++;
   const auto& it = s_scoreMap.find(board);
   if (it != s_scoreMap.end()) {
-    found++;
+    m_found++;
     return it->second;
   }
 
@@ -127,15 +132,19 @@ Score AIPlayer::StaticAnalysis(const Board& board) {
  * @return The score of the board
  */
 Score AIPlayer::CalcStaticAnalysis(const Board& board) {
-  if (board.GetTopGameStatus() == GameStatus::XWins) {
-    return 100;
-  } else if (board.GetTopGameStatus() == GameStatus::OWins) {
-    return -100;
-  } else if (board.GetTopGameStatus() == GameStatus::Draw) {
-    return 0;
+  Score score = 0;
+  for (int i = 0; i < 9; i++) {
+    GameStatus status = board.GetBigBoard()[i];
+
+    if (status == GameStatus::XWins)
+      score += 10;
+    else if (status == GameStatus::OWins)
+      score -= 10;
+    else
+      score += SingleBoardStaticAnalysis(board.GetSmallBoard(i));
   }
 
-  return 0;
+  return score;
 }
 
 /**
@@ -143,15 +152,36 @@ Score AIPlayer::CalcStaticAnalysis(const Board& board) {
  * from the perspective of player X
  *
  * The higher the score, the better it is for player X. This function should be
- * called with a board that is not in a terminal state.
+ * called with a sub board that is not in a terminal state.
  *
  * @param board The board to evaluate
  * @return The score of the board
  */
-Score SingleBoardStaticAnalysis(const Piece* ) {
-  // for (auto [idx0, idx1, idx2] : Board::s_indices) {
-  // }
-  return 0;
+Score SingleBoardStaticAnalysis(const Piece* board) {
+  Score score = 0;
+  for (const auto& indices : Board::s_indices) {
+    int xCount = 0;
+    int oCount = 0;
+    for (int index : indices) {
+      switch (board[index]) {
+      case Piece::X:
+        xCount++;
+        break;
+      case Piece::O:
+        oCount++;
+        break;
+      case Piece::Empty:
+        break;
+      }
+    }
+
+    if (xCount > 0 && oCount == 0) {
+      score += xCount;
+    } else if (oCount > 0 && xCount == 0) {
+      score -= oCount;
+    }
+  }
+  return score;
 }
 
 // You're right that the current implementation of CalcStaticAnalysis is quite basic

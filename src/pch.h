@@ -39,4 +39,6 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
 
+#include "INIReader/INIReader.h"
+
 #include "GLFW/glfw3.h"

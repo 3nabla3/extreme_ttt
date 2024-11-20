@@ -98,16 +98,13 @@ Game::~Game() {
   glfwTerminate();
 }
 
-void Game::RegisterPlayer(std::unique_ptr<Player> player) {
-  if (!m_playerX) {
-    m_playerX = std::move(player);
-    m_playerX->Initialize(PlayerSymbol::X, m_board);
-    SPDLOG_INFO("Registed player X");
-  } else {
-    m_playerO = std::move(player);
-    m_playerO->Initialize(PlayerSymbol::O, m_board);
-    SPDLOG_INFO("Registed player O");
-  }
+void Game::RegisterPlayer(PlayerSymbol symbol, std::unique_ptr<Player>&& player) {
+  std::unique_ptr<Player>& playerRef =
+      (symbol == PlayerSymbol::X) ? m_playerX : m_playerO;
+
+  playerRef = std::move(player);
+  playerRef->Initialize(symbol, m_board);
+  SPDLOG_INFO("Registered player {}", symbol);
 }
 
 GameStatus Game::RunGUI() {

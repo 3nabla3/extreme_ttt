@@ -61,10 +61,12 @@ public:
   friend std::size_t hash_value(const Board& board);
 
   std::array<GameStatus, 9> GetBigBoard() const { return m_bigBoard; }
+  inline const Piece* GetSmallBoard(int index) const { return m_board.data() + index * 9; }
   inline Piece GetPieceAt(int board, int cell) const { return m_board[board * 9 + cell]; }
   inline Piece GetPieceAtRowCol(int row, int col) const { return m_board[s_boardIndexConversion[row * 9 + col]]; }
 
   static const std::array<std::array<int, 3>, 8> s_indices;
+
 private:
   // Get the game status for the entire board
   GameStatus CalcGameStatus(PlayerSymbol currentPlayer) const;

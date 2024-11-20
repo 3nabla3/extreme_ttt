@@ -26,6 +26,7 @@ message("CPP_FILES: ${CPP_FILES}")
 add_executable(extreme_ttt ${CPP_FILES})
 target_include_directories(extreme_ttt PRIVATE external/spdlog/include)
 target_include_directories(extreme_ttt PRIVATE external/glfw/include)
+target_include_directories(extreme_ttt PRIVATE external/INIReader/include)
 target_include_directories(extreme_ttt PRIVATE src)
 
 # set the debug level depending on the build type
@@ -61,6 +62,8 @@ add_executable(unit_tests ${TEST_FILES} ${CPP_FILES})
 target_link_libraries(unit_tests GTest::gtest_main)
 target_link_libraries(unit_tests spdlog::spdlog)
 target_include_directories(unit_tests PRIVATE src)
+target_include_directories(unit_tests PRIVATE external/INIReader/include)
+
 if(MSVC)
   target_link_libraries(unit_tests glfw opengl32)
 elseif(UNIX)

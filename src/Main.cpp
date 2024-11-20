@@ -1,10 +1,23 @@
 #include "pch.h"
 
+#include "AppConfig.h"
 #include "Board.h"
 #include "Game.h"
 #include "players/HumanPlayer.h"
 #include "players/AIPlayer.h"
 #include "players/RandomPlayer.h"
+
+std::unique_ptr<Player> CreatePlayer(std::string playerType, uint8_t AIPlayerDepth) {
+  if (playerType == "human") {
+    return std::make_unique<HumanPlayer>();
+  } else if (playerType == "random") {
+    return std::make_unique<RandomPlayer>();
+  } else if (playerType == "ai") {
+    return std::make_unique<AIPlayer>(AIPlayerDepth);
+  }
+  SPDLOG_ERROR("Unknown player type: {}", playerType);
+  return nullptr;
+}
 
 int main(void) {
   spdlog::set_level(spdlog::level::trace);
@@ -43,15 +56,18 @@ o	x	.	o	o	x	o	.	o
   //   Board initialBoard(initiailBoardStr, Move(7, 2));
 
   // Game game(initialBoard);
+
+  AppConfig config;
+
   Game game;
-  game.RegisterPlayer(std::make_unique<HumanPlayer>());
-  game.RegisterPlayer(std::make_unique<AIPlayer>());
+  std::unique_ptr<Player> playerX;
+  std::unique_ptr<Player> playerO;
+  playerX = CreatePlayer(config.GetXPlayerType(), config.GetAiPlayerDepth());
+  playerO = CreatePlayer(config.GetOPlayerType(), config.GetAiPlayerDepth());
 
+  game.RegisterPlayer(PlayerSymbol::X, std::move(playerX));
+  game.RegisterPlayer(PlayerSymbol::O, std::move(playerO));
   game.RunGUI();
-
-  SPDLOG_INFO("Cache hit ratio: {}", AIPlayer::HitRatio());
-  std::pair<int, int> stats = AIPlayer::HitStats();
-  SPDLOG_INFO("\t\tAttempted: {}, Found: {}", stats.first, stats.second);
 
   return 0;
 }

@@ -7,7 +7,8 @@ public:
   Game(const Board& board) : m_board(board) { Init(); }
   ~Game();
 
-  void RegisterPlayer(std::unique_ptr<Player> player);
+  // the game takes ownership of the player
+  void RegisterPlayer(PlayerSymbol symbol, std::unique_ptr<Player>&& player);
   GameStatus RunGUI();
 
 private:
