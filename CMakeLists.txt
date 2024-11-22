@@ -32,6 +32,7 @@ target_include_directories(extreme_ttt PRIVATE src)
 target_compile_definitions(extreme_ttt PRIVATE
     $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>
     $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>
+    $<$<CONFIG:RelWithDebInfo>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>
 )
 if(MSVC)
   target_compile_options(extreme_ttt PRIVATE /W4 /WX)

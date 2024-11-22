@@ -24,10 +24,15 @@ Move AIPlayer::GetMove() {
     SPDLOG_DEBUG("Analyzing move {}", move);
     Score value = -Negamax(board, m_depth, alpha, beta, weight);
     SPDLOG_DEBUG("\t --> score {} (best value: {})", value, bestValue);
-    if (value > bestValue) {
+
+    if (value > bestValue || bestValue == MIN_SCORE) {
       SPDLOG_DEBUG("New best move {}", move);
       bestValue = value;
       bestMove = move;
+      if (value == MAX_SCORE) {
+        SPDLOG_TRACE("Breaking early because found max score");
+        break;
+      }
     }
   }
 
