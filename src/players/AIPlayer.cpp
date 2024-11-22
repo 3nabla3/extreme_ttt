@@ -104,9 +104,9 @@ Score AIPlayer::Negamax(const Board& board, int depth, Score alpha, Score beta, 
 Score AIPlayer::StaticAnalysis(const Board& board) {
   // base cases
   if (board.GetTopGameStatus() == GameStatus::XWins)
-    return 100;
+    return MAX_SCORE;
   else if (board.GetTopGameStatus() == GameStatus::OWins)
-    return -100;
+    return MIN_SCORE;
   else if (board.GetTopGameStatus() == GameStatus::Draw)
     return 0;
 
@@ -137,9 +137,9 @@ Score AIPlayer::CalcStaticAnalysis(const Board& board) {
     GameStatus status = board.GetBigBoard()[i];
 
     if (status == GameStatus::XWins)
-      score += 10;
+      score += 50;
     else if (status == GameStatus::OWins)
-      score -= 10;
+      score -= 50;
     else
       score += SingleBoardStaticAnalysis(board.GetSmallBoard(i));
   }

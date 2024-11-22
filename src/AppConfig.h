@@ -1,31 +1,55 @@
 class AppConfig {
 public:
-  AppConfig(const std::string& configFileName = "settings.ini") {
-    INIReader reader(configFileName);
-    int result = reader.ParseError();
+  AppConfig() {
+    // if there is a settings.ini in the current dir use that
+    std::filesystem::path configFilePath = std::filesystem::current_path() / "settings.ini";
 
-    if (result == -1) {
-      SPDLOG_WARN("File {} not found, using default values", configFileName);
-      LoadDefaults();
-      return;
+    if (!std::filesystem::exists(configFilePath)) {
+      // if not use the one in the parent
+      configFilePath = std::filesystem::current_path().parent_path() / "settings.ini";
     }
 
-    if (result != 0) {
-      SPDLOG_ERROR("Failed to parse {} at line {}, using default values", configFileName, result);
-      LoadDefaults();
-      return;
-    }
-
-    LoadSettings(reader);
-    SPDLOG_INFO("Loaded settings from {}", configFileName);
-    PrintSettings();
+    Init(configFilePath);
   }
+  AppConfig(const std::filesystem::path& configFilePath) { Init(configFilePath); }
 
   std::string GetXPlayerType() const { return Get("Players", "player_x_type"); }
   std::string GetOPlayerType() const { return Get("Players", "player_o_type"); }
   uint8_t GetAiPlayerDepth() const { return std::stoi(Get("AIplayer", "depth")); }
 
 private:
+  void Init(const std::filesystem::path& configFilePath) {
+    // configFilePath.
+    INIReader reader(configFilePath);
+    int result = reader.ParseError();
+
+    if (result == -1) {
+      SPDLOG_WARN(
+          "File {} not found, using default values",
+          configFilePath.string());
+
+      LoadDefaults();
+      return;
+    }
+
+    if (result != 0) {
+      SPDLOG_ERROR(
+          "Failed to parse {} at line {}, using default values",
+          configFilePath.string(),
+          result);
+
+      LoadDefaults();
+      return;
+    }
+
+    LoadSettings(reader);
+    SPDLOG_INFO(
+        "Loaded settings from {}",
+        configFilePath.string());
+
+    PrintSettings();
+  }
+
   using SettingKey = std::pair<std::string, std::string>;
 
   struct SettingKeyHash {

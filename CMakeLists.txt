@@ -21,7 +21,6 @@ add_subdirectory(external/glfw)
 
 # Automatically add all .cpp files to the executable
 file(GLOB_RECURSE CPP_FILES src/*.cpp)
-message("CPP_FILES: ${CPP_FILES}")
 
 add_executable(extreme_ttt ${CPP_FILES})
 target_include_directories(extreme_ttt PRIVATE external/spdlog/include)

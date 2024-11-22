@@ -3,6 +3,9 @@
 
 typedef int32_t Score;
 
+#define MAX_SCORE std::numeric_limits<Score>::max()
+#define MIN_SCORE std::numeric_limits<Score>::min()
+
 class AIPlayer : public Player {
 public:
   AIPlayer() = default;
