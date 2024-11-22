@@ -19,7 +19,7 @@ std::unique_ptr<Player> CreatePlayer(std::string playerType, uint8_t AIPlayerDep
   return nullptr;
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
   spdlog::set_level(spdlog::level::trace);
   SPDLOG_INFO(R"(
      _____      _                             _____ _        _____            _____          
@@ -57,7 +57,7 @@ o	x	.	o	o	x	o	.	o
 
   // Game game(initialBoard);
 
-  AppConfig config;
+  AppConfig config(argc, argv);
 
   Game game;
   std::unique_ptr<Player> playerX;

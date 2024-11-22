@@ -1,17 +1,31 @@
 class AppConfig {
 public:
-  AppConfig() {
-    // if there is a settings.ini in the current dir use that
-    std::filesystem::path configFilePath = std::filesystem::current_path() / "settings.ini";
+  AppConfig(int argc, char* argv[]) {
+    SPDLOG_DEBUG("argv[0]: {}", argv[0]);
 
-    if (!std::filesystem::exists(configFilePath)) {
-      // if not use the one in the parent
-      configFilePath = std::filesystem::current_path().parent_path() / "settings.ini";
+    if (argc == 2 && strcmp(argv[1], "--help") == 0) {
+      SPDLOG_INFO("Usage: {} <config file>", argv[0]);
+      exit(0);
     }
 
-    Init(configFilePath);
+    if (argc > 2) {
+      SPDLOG_ERROR("Usage: {} <config file>", argv[0]);
+      exit(1);
+    }
+
+    if (argc == 2) {
+      if (!std::filesystem::exists(argv[1])) {
+        SPDLOG_ERROR("Config file {} does not exist", argv[1]);
+        exit(1);
+      }
+      Init(argv[1]);
+      return;
+    }
+
+    // by default use the settings.ini in the parent directory of the executable
+    std::filesystem::path executablePath = std::filesystem::canonical(argv[0]);
+    Init(executablePath.parent_path().parent_path() / "settings.ini");
   }
-  AppConfig(const std::filesystem::path& configFilePath) { Init(configFilePath); }
 
   std::string GetXPlayerType() const { return Get("Players", "player_x_type"); }
   std::string GetOPlayerType() const { return Get("Players", "player_o_type"); }

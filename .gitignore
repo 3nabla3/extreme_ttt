@@ -2,3 +2,6 @@ build/
 
 ## created by gtest
 Testing/
+
+## config files
+settings.ini
