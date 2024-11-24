@@ -29,12 +29,12 @@ public:
 
   std::string GetXPlayerType() const { return Get("Players", "player_x_type"); }
   std::string GetOPlayerType() const { return Get("Players", "player_o_type"); }
-  uint8_t GetAiPlayerDepth() const { return std::stoi(Get("AIplayer", "depth")); }
+  uint8_t GetAiPlayerDepth() const { return static_cast<uint8_t>(std::stoi(Get("AIplayer", "depth"))); }
 
 private:
   void Init(const std::filesystem::path& configFilePath) {
     // configFilePath.
-    INIReader reader(configFilePath);
+    INIReader reader(configFilePath.string());
     int result = reader.ParseError();
 
     if (result == -1) {
@@ -109,7 +109,9 @@ private:
   }
 
   void ToLowerCase(std::string& str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {
+      return static_cast<char>(std::tolower(c));
+    });
   }
 
   std::unordered_map<SettingKey, std::string, SettingKeyHash> settings;

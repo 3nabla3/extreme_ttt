@@ -297,7 +297,7 @@ inline int ini_parse(const char* filename, ini_handler handler, void* user) {
 class INIReader {
 public:
   // Empty Constructor
-  INIReader(){};
+  INIReader() {};
 
   // Construct INIReader and parse given filename. See ini.h for more info
   // about the parsing.
@@ -412,7 +412,9 @@ inline bool INIReader::GetBoolean(const std::string& section,
                                   bool default_value) const {
   std::string valstr = Get(section, name, "");
   // Convert to lower case to make string comparisons case-insensitive
-  std::transform(valstr.begin(), valstr.end(), valstr.begin(), ::tolower);
+  std::transform(valstr.begin(), valstr.end(), valstr.begin(), [](unsigned char c) {
+    return static_cast<char>(::tolower(c));
+  });
   if (valstr == "true" || valstr == "yes" || valstr == "on" || valstr == "1")
     return true;
   else if (valstr == "false" || valstr == "no" || valstr == "off" ||
@@ -426,7 +428,9 @@ inline std::string INIReader::MakeKey(const std::string& section,
                                       const std::string& name) {
   std::string key = section + "=" + name;
   // Convert to lower case to make section/name lookups case-insensitive
-  std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+  std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) {
+    return static_cast<char>(::tolower(c));
+  });
   return key;
 }
 
