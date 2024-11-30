@@ -1,0 +1,6 @@
+[Players]
+player_x_type=Human
+player_o_type=ai
+
+[AIplayer]
+depth=3

@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# This sets the policy to NEW, which means the timestamps
-# of the extracted files will be set to time of extraction
-cmake_policy(SET CMP0135 NEW)
+if (MSVC)
+  # This sets the policy to NEW, which means the timestamps
+  # of the extracted files will be set to time of extraction
+  cmake_policy(SET CMP0135 NEW)
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
