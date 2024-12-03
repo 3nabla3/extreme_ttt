@@ -22,9 +22,8 @@ public:
       return;
     }
 
-    // by default use the settings.ini in the parent directory of the executable
-    std::filesystem::path executablePath = std::filesystem::canonical(argv[0]);
-    Init(executablePath.parent_path().parent_path() / "settings.ini");
+    // by default use the root of the git repo
+    Init(std::filesystem::path(__FILE__).parent_path().parent_path() / "settings.ini");
   }
 
   std::string GetXPlayerType() const { return Get("Players", "player_x_type"); }

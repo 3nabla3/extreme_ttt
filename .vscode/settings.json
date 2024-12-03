@@ -108,5 +108,6 @@
         "syncstream": "cpp",
         "typeindex": "cpp",
         "valarray": "cpp"
-    }
+    },
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}"
 }
