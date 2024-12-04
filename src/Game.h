@@ -13,6 +13,7 @@ public:
 
 private:
   void OnKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods);
+  void Reset();
 
   void Init() {
     InitGLFW();
@@ -47,6 +48,8 @@ private:
   std::atomic<bool> m_isPaused = false;
 
   std::atomic<bool> m_gameShouldClose = false;
+  // set whether the game should be reset next game loop
+  std::atomic<bool> m_resetFlag = false;
 
   int m_windowWidth = 680;
   int m_windowHeight = 600;

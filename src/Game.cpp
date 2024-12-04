@@ -6,13 +6,23 @@ void Game::OnKeyPress(GLFWwindow*, int key, int scancode, int action, [[maybe_un
   [[maybe_unused]] const char* keyName = glfwGetKeyName(key, scancode);
   SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, keyName ? keyName : "");
 
-  if (key == GLFW_KEY_SPACE) {
+  switch (key) {
+  case GLFW_KEY_SPACE:
     m_isPaused = !m_isPaused;
     m_pauseCondVar.notify_one();
     SPDLOG_INFO("Game is {}", m_isPaused ? "paused" : "running");
-  } else if (key == GLFW_KEY_ESCAPE) {
+    break;
+
+  case GLFW_KEY_ESCAPE:
     m_gameShouldClose = true;
     SPDLOG_INFO("Closing game");
+    break;
+
+  case GLFW_KEY_R:
+    SPDLOG_INFO("Resetting game");
+    m_resetFlag = true;
+    Reset();
+    break;
   }
 }
 
@@ -108,6 +118,23 @@ void Game::InitCallbacks() {
   });
 
   SPDLOG_TRACE("Callbacks initialized");
+}
+
+void Game::Reset() {
+  // Reset the board to initial state
+  m_board = Board();
+
+  // make sure we're not paused
+  m_isPaused = false;
+  m_pauseCondVar.notify_one();
+
+  // Reset players
+  if (m_playerX)
+    m_playerX->Reset();
+  if (m_playerO)
+    m_playerO->Reset();
+
+  SPDLOG_INFO("Game reset complete");
 }
 
 Game::~Game() {
@@ -304,10 +331,17 @@ GameStatus Game::GameLoop() {
       otherPlayer = m_playerX.get();
     }
 
-    SPDLOG_INFO("Waiting for a move");
+    SPDLOG_INFO("Waiting for a move from {}", ps);
     Move move;
     bool played = false;
     move = currentPlayer->GetMove();
+    // if the game is being reset, ignore the move
+    if (m_resetFlag) {
+      SPDLOG_TRACE("Game has reset flag, ignoring move");
+      m_resetFlag = false;
+      continue;
+    }
+
     if (m_board.IsMoveLegal(move)) {
       otherPlayer->ReceiveMove(move);
       played = true;

@@ -8,15 +8,19 @@ public:
   }
 
   virtual void Terminate() override {
-    m_isTerminated = true;
+    m_isTerminatedOrReset = true;
     m_cv.notify_all();
   }
 
   virtual Move GetMove() override {
+    // reset the flag before we use it to
+    // override the check
+    m_isTerminatedOrReset = false;
+
     // wait until a move is chosen
     std::unique_lock<std::mutex> lock(m_mutex);
     m_cv.wait(lock, [this] {
-      return m_chosenMove.has_value() || m_isTerminated;
+      return m_chosenMove.has_value() || m_isTerminatedOrReset;
     });
 
     if (!m_chosenMove) {
@@ -33,7 +37,10 @@ public:
   }
 
   virtual void ReceiveMove(const Move&) override {}
-  virtual void Reset() override {}
+  virtual void Reset() override {
+    m_chosenMove = std::nullopt;
+    Terminate();
+  }
 
   virtual void OnMouseButtonEvent(double x, double y) override {
     int row = static_cast<int>(y * 9);
@@ -51,5 +58,5 @@ private:
 
   std::mutex m_mutex;
   std::condition_variable m_cv;
-  std::atomic<bool> m_isTerminated = false;
+  std::atomic<bool> m_isTerminatedOrReset = false;
 };
