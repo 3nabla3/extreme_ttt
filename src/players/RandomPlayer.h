@@ -16,6 +16,8 @@ public:
 
   virtual Move GetMove() override {
     std::uniform_int_distribution<std::mt19937::result_type> dist(0, 8);
+    m_isTerminated = false;
+
     while (!m_isTerminated) {
       int boardPosition = dist(m_rng);
       int cellPosition = dist(m_rng);
@@ -31,7 +33,10 @@ public:
   }
 
   virtual void ReceiveMove(const Move& move) override { m_board.Play(move); }
-  virtual void Reset() override {}
+  virtual void Reset() override {
+    m_isTerminated = true;
+    m_board = Board();
+  }
 
 private:
   PlayerSymbol m_player;
