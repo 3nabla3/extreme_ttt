@@ -6,10 +6,13 @@ void Game::OnKeyPress(GLFWwindow*, int key, int scancode, int action, [[maybe_un
   [[maybe_unused]] const char* keyName = glfwGetKeyName(key, scancode);
   SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, keyName ? keyName : "");
 
-  if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+  if (key == GLFW_KEY_SPACE) {
     m_isPaused = !m_isPaused;
     m_pauseCondVar.notify_one();
     SPDLOG_INFO("Game is {}", m_isPaused ? "paused" : "running");
+  } else if (key == GLFW_KEY_ESCAPE) {
+    m_gameShouldClose = true;
+    SPDLOG_INFO("Closing game");
   }
 }
 
@@ -48,6 +51,24 @@ void Game::CreateGLFWWindow() {
 }
 
 void Game::InitCallbacks() {
+  // Add a static pointer to the current game instance
+  static Game* currentGameInstance = this;
+
+  // Handle both SIGINT (Ctrl+C) and SIGTERM (kill command)
+  auto signalHandler = [](int sig) {
+    SPDLOG_DEBUG("Received {} signal", sig);
+    currentGameInstance->m_gameShouldClose = true;
+    glfwPostEmptyEvent(); // Wake up the event loop
+  };
+
+  signal(SIGINT, signalHandler);  // Ctrl+C
+  signal(SIGTERM, signalHandler); // kill command
+
+  glfwSetWindowCloseCallback(m_window, [](GLFWwindow* window) {
+    Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
+    game->m_gameShouldClose = true;
+  });
+
   glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
       Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
@@ -78,7 +99,7 @@ void Game::InitCallbacks() {
   });
 
   glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height) {
-    SPDLOG_DEBUG("WindowResizeEvent to {}x{}", width, height);
+    // SPDLOG_DEBUG("WindowResizeEvent to {}x{}", width, height);
     Game* game = static_cast<Game*>(glfwGetWindowUserPointer(window));
 
     game->m_windowWidth = width;
@@ -112,10 +133,9 @@ GameStatus Game::RunGUI() {
 
   std::thread renderThread(&Game::RenderLoop, this);
   std::thread gameThread(&Game::GameLoop, this);
-  while (!glfwWindowShouldClose(m_window)) {
+  while (!m_gameShouldClose) {
     glfwWaitEvents();
   }
-  m_gameShouldClose = true;
   m_playerX->Terminate();
   m_playerO->Terminate();
 
@@ -164,7 +184,7 @@ void Game::RenderLoop() {
   glfwMakeContextCurrent(m_window);
 
   SetBackgroundColor();
-  while (!glfwWindowShouldClose(m_window)) {
+  while (!m_gameShouldClose) {
     glClear(GL_COLOR_BUFFER_BIT);
     // on resize events
     if (m_viewportNeedsUpdate) {
