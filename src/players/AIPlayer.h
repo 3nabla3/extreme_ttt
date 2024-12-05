@@ -28,7 +28,14 @@ public:
 
   virtual Move GetMove() override;
   virtual void ReceiveMove(const Move& move) override;
-  virtual void Reset() override {}
+  virtual void Reset() override {
+    m_isTerminated = true;
+    std::unique_lock<std::mutex> lock(m_boardMutex);
+    m_mainBoard = Board();
+    m_attempted = 0;
+    m_found = 0;
+    s_scoreMap.clear();
+  }
 
   float HitRatio() { return ((m_found * 1.0f) / (m_attempted * 1.0f)); }
   std::pair<int, int> HitStats() { return {m_attempted, m_found}; }
@@ -44,6 +51,10 @@ private:
   Board m_mainBoard;
   uint8_t m_depth = 3;
   std::atomic<bool> m_isTerminated = false;
+
+  // make sure we dont reset the board while
+  // the AI is thinking
+  std::mutex m_boardMutex;
 
   // static variables for caching and bookkeeping
   static std::unordered_map<Board, Score> s_scoreMap;

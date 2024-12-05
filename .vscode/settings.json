@@ -107,7 +107,10 @@
         "scoped_allocator": "cpp",
         "syncstream": "cpp",
         "typeindex": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "expected": "cpp",
+        "spanstream": "cpp",
+        "stacktrace": "cpp"
     },
     "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}"
 }

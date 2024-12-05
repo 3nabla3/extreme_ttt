@@ -4,6 +4,9 @@
 std::unordered_map<Board, Score> AIPlayer::s_scoreMap;
 
 Move AIPlayer::GetMove() {
+  m_isTerminated = false;
+  std::unique_lock<std::mutex> lock(m_boardMutex);
+
   std::vector<std::pair<Move, Board>> boards = GetChildrenBoards(m_mainBoard);
   Score bestValue = std::numeric_limits<Score>::min();
   Move bestMove;
