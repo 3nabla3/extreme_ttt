@@ -23,7 +23,7 @@ public:
     SPDLOG_INFO("Depth: {}", m_depth);
 
     SPDLOG_INFO("Cache hit ratio: {}", HitRatio());
-    std::pair<int, int> stats = HitStats();
+    [[maybe_unused]] std::pair<int, int> stats = HitStats();
     SPDLOG_INFO("\t\tAttempted: {}, Found: {}", stats.first, stats.second);
   }
 

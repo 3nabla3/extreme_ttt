@@ -67,7 +67,7 @@ o	x	.	o	o	x	o	.	o
 
   game.RegisterPlayer(PlayerSymbol::X, std::move(playerX));
   game.RegisterPlayer(PlayerSymbol::O, std::move(playerO));
-  game.RunGUI();
+  game.Run();
 
   return 0;
 }

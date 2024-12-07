@@ -2,7 +2,7 @@
 #include "Game.h"
 #include "Rendering.h"
 
-void Game::OnKeyPress(GLFWwindow*, int key, int scancode, int action, [[maybe_unused]] int mods) {
+void Game::OnKeyPress(GLFWwindow*, int key, int scancode, [[maybe_unused]] int action, [[maybe_unused]] int mods) {
   [[maybe_unused]] const char* keyName = glfwGetKeyName(key, scancode);
   SPDLOG_DEBUG("KeyPressEvent {} {} {} {} {}", key, scancode, action, mods, keyName ? keyName : "");
 
@@ -65,7 +65,7 @@ void Game::InitCallbacks() {
   static Game* currentGameInstance = this;
 
   // Handle both SIGINT (Ctrl+C) and SIGTERM (kill command)
-  auto signalHandler = [](int sig) {
+  auto signalHandler = []([[maybe_unused]] int sig) {
     SPDLOG_DEBUG("Received {} signal", sig);
     currentGameInstance->m_gameShouldClose = true;
     glfwPostEmptyEvent(); // Wake up the event loop
@@ -155,7 +155,12 @@ void Game::RegisterPlayer(PlayerSymbol symbol, std::unique_ptr<Player>&& player)
   SPDLOG_INFO("Registered player {}", symbol);
 }
 
-GameStatus Game::RunGUI() {
+GameStatus Game::Run() {
+  if (m_headless) {
+    SPDLOG_INFO("Running game in headless mode");
+    return GameLoop();
+  }
+
   SPDLOG_TRACE("Running GUI");
 
   std::thread renderThread(&Game::RenderLoop, this);
@@ -325,11 +330,10 @@ GameStatus Game::GameLoop() {
     // using namespace std::chrono_literals;
     // std::this_thread::sleep_for(100ms);
 
-    PlayerSymbol ps = m_board.GetCurrentPlayer();
     Player& currentPlayer = GetCurrentPlayer();
     Player& otherPlayer = GetOtherPlayer();
 
-    SPDLOG_INFO("Waiting for a move from {}", ps);
+    SPDLOG_INFO("Waiting for a move from {}", m_board.GetCurrentPlayer());
     Move move;
     bool played = false;
     move = currentPlayer.GetMove();
@@ -348,10 +352,14 @@ GameStatus Game::GameLoop() {
     }
 
     if (played) {
-      SPDLOG_INFO("{} played {}", ps, move);
+      SPDLOG_INFO("{} played {}", m_board.GetCurrentPlayer(), move);
       m_board.Play(move);
       SPDLOG_DEBUG("New hash {}", std::hash<Board>{}(m_board));
     }
+
+    // cannot pause in headless mode
+    if (m_headless)
+      continue;
 
     std::unique_lock<std::mutex> pauseLock(m_PauseMutex);
     m_pauseCondVar.wait(pauseLock, [this] {

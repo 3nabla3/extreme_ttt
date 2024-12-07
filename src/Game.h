@@ -3,19 +3,22 @@
 
 class Game {
 public:
-  Game() { Init(); }
-  Game(const Board& board) : m_board(board) { Init(); }
+  Game(bool headless = false) : m_headless(headless) { Init(); }
+  Game(const Board& board, bool headless = false) : m_board(board), m_headless(headless) { Init(); }
   ~Game();
 
   // the game takes ownership of the player
   void RegisterPlayer(PlayerSymbol symbol, std::unique_ptr<Player>&& player);
-  GameStatus RunGUI();
+  GameStatus Run();
 
 private:
   void OnKeyPress(GLFWwindow* window, int key, int scancode, int action, int mods);
   void Reset();
 
   void Init() {
+    if (m_headless)
+      return;
+
     InitGLFW();
     CreateGLFWWindow();
     InitCallbacks();
@@ -47,6 +50,8 @@ private:
   std::unique_ptr<Player> m_playerX;
   std::unique_ptr<Player> m_playerO;
 
+  bool m_headless = false;
+
   // cant make this a unique_ptr
   // because not a complete type
   GLFWwindow* m_window = nullptr;
@@ -54,7 +59,6 @@ private:
   std::mutex m_PauseMutex;
   std::condition_variable m_pauseCondVar;
   std::atomic<bool> m_isPaused = false;
-
   std::atomic<bool> m_gameShouldClose = false;
   // set whether the game should be reset next game loop
   std::atomic<bool> m_resetFlag = false;
