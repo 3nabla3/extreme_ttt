@@ -30,6 +30,14 @@ private:
   void SetBackgroundColor();
   float GetColorIntensity(Move move);
 
+  Player& GetCurrentPlayer() {
+    return (m_board.GetCurrentPlayer() == PlayerSymbol::X) ? *m_playerX : *m_playerO;
+  }
+
+  Player& GetOtherPlayer() {
+    return (m_board.GetCurrentPlayer() == PlayerSymbol::X) ? *m_playerO : *m_playerX;
+  }
+
   void RenderSinglePiece(int row, int col);
   void RenderSmallPieces();
   void RenderBigPieces();
@@ -50,6 +58,10 @@ private:
   std::atomic<bool> m_gameShouldClose = false;
   // set whether the game should be reset next game loop
   std::atomic<bool> m_resetFlag = false;
+
+  // Thinking indicator state
+  std::atomic<bool> m_isThinking = false;
+  float m_spinnerAngle = 0.0f;
 
   int m_windowWidth = 680;
   int m_windowHeight = 600;

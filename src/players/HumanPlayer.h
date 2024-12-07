@@ -3,6 +3,8 @@
 
 class HumanPlayer : public Player {
 public:
+  virtual bool IsHuman() const override { return true; }
+
   virtual void Initialize(PlayerSymbol player, const Board&) override {
     m_player = player;
   }

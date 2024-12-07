@@ -224,8 +224,13 @@ void Game::RenderLoop() {
     RenderSmallPieces();
     RenderBigPieces();
 
-    if (!m_board.IsGameOver())
+    if (!m_board.IsGameOver()) {
       RenderLegalMoves();
+
+      // if two AI are playing they should not show the thinking spinner
+      if (!GetCurrentPlayer().IsHuman() && GetOtherPlayer().IsHuman())
+        RenderThinkingSpinner(m_spinnerAngle += 0.1f);
+    }
 
     glfwSwapBuffers(m_window);
   }
@@ -320,21 +325,14 @@ GameStatus Game::GameLoop() {
     // using namespace std::chrono_literals;
     // std::this_thread::sleep_for(100ms);
 
-    Player* currentPlayer;
-    Player* otherPlayer;
     PlayerSymbol ps = m_board.GetCurrentPlayer();
-    if (ps == PlayerSymbol::X) {
-      currentPlayer = m_playerX.get();
-      otherPlayer = m_playerO.get();
-    } else {
-      currentPlayer = m_playerO.get();
-      otherPlayer = m_playerX.get();
-    }
+    Player& currentPlayer = GetCurrentPlayer();
+    Player& otherPlayer = GetOtherPlayer();
 
     SPDLOG_INFO("Waiting for a move from {}", ps);
     Move move;
     bool played = false;
-    move = currentPlayer->GetMove();
+    move = currentPlayer.GetMove();
     // if the game is being reset, ignore the move
     if (m_resetFlag) {
       SPDLOG_TRACE("Game has reset flag, ignoring move");
@@ -343,7 +341,7 @@ GameStatus Game::GameLoop() {
     }
 
     if (m_board.IsMoveLegal(move)) {
-      otherPlayer->ReceiveMove(move);
+      otherPlayer.ReceiveMove(move);
       played = true;
     } else if (!m_gameShouldClose) {
       SPDLOG_ERROR("Illegal move");

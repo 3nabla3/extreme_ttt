@@ -3,8 +3,9 @@
 
 typedef int32_t Score;
 
-#define MAX_SCORE std::numeric_limits<Score>::max()
-#define MIN_SCORE std::numeric_limits<Score>::min()
+// add 1 to avoid overflow errors when multiplying by -1
+#define MAX_SCORE std::numeric_limits<Score>::max() - 1
+#define MIN_SCORE std::numeric_limits<Score>::min() + 1
 
 class AIPlayer : public Player {
 public:

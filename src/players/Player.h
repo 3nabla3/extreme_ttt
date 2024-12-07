@@ -4,6 +4,8 @@
 
 class Player {
 public:
+  virtual bool IsHuman() const { return false; }
+
   virtual ~Player(){};
 
   /**

@@ -132,3 +132,41 @@ void RenderBoardBorder(int boardPosition) {
   glVertex2d(startingCol, startingRow - boardSize);
   glEnd();
 }
+
+/**
+ * Renders a spinning indicator in the top-right corner to show AI is thinking
+ * @param angle The current rotation angle of the spinner in degrees
+ */
+void RenderThinkingSpinner(float angle) {
+  const float size = 0.15f; // Size of the spinner
+  const float x = 2.85f;    // X position (top-right corner)
+  const float y = 2.85f;    // Y position
+  const int segments = 8;   // Number of segments in the spinner
+
+  glLoadIdentity();
+  glOrtho(0, 3, 0, 3, -1, 1);
+
+  // Save current matrix
+  glPushMatrix();
+
+  // Translate to position and rotate
+  glTranslatef(x, y, 0.0f);
+  glRotatef(angle, 0.0f, 0.0f, 1.0f);
+
+  // Draw the spinner
+  glColor3f(0.7f, 0.7f, 0.7f);
+  glLineWidth(2.f);
+  glBegin(GL_LINES);
+  for (int i = 0; i < segments; ++i) {
+    float theta = (float)i * 2.0f * M_PI / segments;
+    float alpha = (float)(segments - i) / segments; // Fade out effect
+
+    glColor4f(0.7f, 0.7f, 0.7f, alpha);
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f(size * cosf(theta), size * sinf(theta));
+  }
+  glEnd();
+
+  // Restore matrix
+  glPopMatrix();
+}
